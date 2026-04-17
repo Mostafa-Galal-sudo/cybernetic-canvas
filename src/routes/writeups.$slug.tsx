@@ -172,7 +172,7 @@ function WriteupDetail() {
 
       <Reveal delay={0.15}>
         <div className="prose prose-invert mt-10 max-w-none space-y-5 text-foreground/85">
-          {post.body.split("\n\n").map((block, i) => {
+          {post.body.split("\n\n").map((block: string, i: number) => {
             if (block.startsWith("## ")) {
               return (
                 <h2
@@ -197,7 +197,7 @@ function WriteupDetail() {
             if (block.startsWith("- ")) {
               return (
                 <ul key={i} className="ml-5 list-disc space-y-1.5">
-                  {block.split("\n").map((li, j) => (
+                  {block.split("\n").map((li: string, j: number) => (
                     <li key={j}>{li.replace(/^-\s/, "")}</li>
                   ))}
                 </ul>
