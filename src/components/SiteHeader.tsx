@@ -48,7 +48,7 @@ export function SiteHeader() {
           </span>
           <span className="hidden sm:inline">
             <span className="text-cyber-cyan">~/</span>
-            <span className="text-foreground">your-name</span>
+            <span className="text-foreground">mostafa-galal</span>
             <span className="animate-pulse-glow text-cyber-violet">_</span>
           </span>
         </Link>

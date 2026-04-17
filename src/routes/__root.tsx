@@ -48,18 +48,18 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#06070B" },
-      { title: "[Your Name] — Cybersecurity Engineer & Red Teamer" },
+      { title: "Mostafa Galal — Cybersecurity Engineer & Red Teamer" },
       {
         name: "description",
         content:
-          "Portfolio of [Your Name] — cybersecurity engineer, red teamer, and software craftsman. Offensive security, secure engineering, and CTF writeups.",
+          "Portfolio of Mostafa Galal — Communications & Electronics engineer, eJPT-certified red teamer, and offensive security researcher.",
       },
-      { name: "author", content: "[Your Name]" },
-      { property: "og:title", content: "[Your Name] — Cybersecurity Engineer & Red Teamer" },
+      { name: "author", content: "Mostafa Mohamed Galal" },
+      { property: "og:title", content: "Mostafa Galal — Cybersecurity Engineer & Red Teamer" },
       {
         property: "og:description",
         content:
-          "Premium portfolio: red team engagements, secure engineering, CVE research, and CTF writeups.",
+          "Premium portfolio: red team work, secure engineering, embedded systems, and bug bounty findings.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

@@ -10,17 +10,17 @@ import { SectionHeading } from "@/components/SectionHeading";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "[Your Name] — Cybersecurity Engineer & Red Teamer" },
+      { title: "Mostafa Galal — Cybersecurity Engineer & Red Teamer" },
       {
         name: "description",
         content:
-          "Premium portfolio of [Your Name]. Offensive security, red team operations, secure engineering, and CTF writeups.",
+          "Portfolio of Mostafa Galal — Communications & Electronics engineer, eJPT-certified red teamer, and offensive security researcher.",
       },
-      { property: "og:title", content: "[Your Name] — Cybersecurity Engineer & Red Teamer" },
+      { property: "og:title", content: "Mostafa Galal — Cybersecurity Engineer & Red Teamer" },
       {
         property: "og:description",
         content:
-          "Premium portfolio of [Your Name]. Offensive security, red team operations, secure engineering, and CTF writeups.",
+          "Portfolio of Mostafa Galal — Communications & Electronics engineer, eJPT-certified red teamer, and offensive security researcher.",
       },
     ],
   }),
@@ -61,7 +61,7 @@ function Index() {
           <div className="max-w-4xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-[0.25em] text-cyber-cyan glass-panel gradient-border">
               <span className="inline-block h-1.5 w-1.5 animate-pulse-glow rounded-full bg-cyber-cyan" />
-              v1.0 — accepting engagements
+              eJPT certified — open to engagements
             </div>
 
             <h1
@@ -93,9 +93,10 @@ function Index() {
 
             <Reveal delay={0.8}>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                I break things on purpose so they don't break by accident.
-                [Your one-line bio describing what you do, who you help, and the
-                outcome you deliver.]
+                I'm Mostafa Galal — a Communications & Electronics Engineering
+                student and offensive security practitioner. I build embedded
+                systems, research payload behavior, and rank #1 on TryHackMe
+                leaderboards in my spare time.
               </p>
             </Reveal>
 
@@ -121,9 +122,9 @@ function Index() {
               <div className="mt-12 grid max-w-2xl grid-cols-2 gap-6 sm:grid-cols-4">
                 {[
                   { Icon: Shield, label: "Red Team Ops" },
-                  { Icon: Cpu, label: "Secure Eng" },
+                  { Icon: Cpu, label: "Embedded Sys" },
                   { Icon: Terminal, label: "CTF Player" },
-                  { Icon: Zap, label: "0-day Hunter" },
+                  { Icon: Zap, label: "Bug Hunter" },
                 ].map(({ Icon, label }) => (
                   <div key={label} className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                     <Icon className="h-3.5 w-3.5 text-cyber-cyan" />
@@ -146,15 +147,15 @@ function Index() {
           <SectionHeading
             eyebrow="metrics::live"
             title="Numbers from the field"
-            description="A snapshot of impact across engagements, research, and competition."
+            description="A snapshot of impact across competitions, research, and engagements."
           />
         </Reveal>
         <div className="mt-12 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            { n: 47, suffix: "+", label: "CVEs disclosed" },
-            { n: 132, suffix: "", label: "Boxes pwned" },
-            { n: 28, suffix: "", label: "CTFs won" },
-            { n: 8, suffix: " yrs", label: "In the trenches" },
+            { n: 3, suffix: "×", label: "TryHackMe #1 seasons" },
+            { n: 1, suffix: "", label: "Snapchat SMTP relay reported" },
+            { n: 20, suffix: "th", label: "CyberTalents (of 250)" },
+            { n: 100, suffix: "", label: "CyShield top placement" },
           ].map((s, i) => (
             <Reveal key={s.label} delay={i * 0.08}>
               <div className="relative rounded-2xl p-6 glass-panel gradient-border corner-brackets">
@@ -184,12 +185,12 @@ function Index() {
         </Reveal>
         <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[
-            { to: "/about", k: "01", t: "About", d: "Background, principles, and how I think about security." },
-            { to: "/skills", k: "02", t: "Skills", d: "Offensive, defensive, languages, tooling, cloud." },
-            { to: "/projects", k: "03", t: "Projects", d: "Selected work — tools, exploits, platforms." },
-            { to: "/experience", k: "04", t: "Experience", d: "Career timeline and key milestones." },
-            { to: "/writeups", k: "05", t: "Writeups", d: "CTF solves and security research notes." },
-            { to: "/services", k: "06", t: "Services", d: "Pentesting, red teaming, secure engineering." },
+            { to: "/about", k: "01", t: "About", d: "Background, principles, and how I approach offensive security." },
+            { to: "/skills", k: "02", t: "Skills", d: "Offensive, defensive, languages, tooling, embedded." },
+            { to: "/projects", k: "03", t: "Projects", d: "11 hands-on projects — security tooling and embedded systems." },
+            { to: "/experience", k: "04", t: "Experience", d: "Certifications, training, and competition milestones." },
+            { to: "/writeups", k: "05", t: "Writeups", d: "Bug bounty findings and red team learnings." },
+            { to: "/services", k: "06", t: "Services", d: "Pentesting, red teaming, security consulting." },
           ].map((m, i) => (
             <Reveal key={m.to} delay={i * 0.06}>
               <Link

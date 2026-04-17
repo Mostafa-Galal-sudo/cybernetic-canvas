@@ -13,17 +13,17 @@ if (typeof window !== "undefined") {
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About — [Your Name]" },
+      { title: "About — Mostafa Galal" },
       {
         name: "description",
         content:
-          "Background and principles behind [Your Name]'s work in offensive security and secure engineering.",
+          "Background and principles behind Mostafa Galal's work in offensive security and embedded engineering.",
       },
-      { property: "og:title", content: "About — [Your Name]" },
+      { property: "og:title", content: "About — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Background and principles behind [Your Name]'s work in offensive security and secure engineering.",
+          "Background and principles behind Mostafa Galal's work in offensive security and embedded engineering.",
       },
     ],
   }),
@@ -52,11 +52,11 @@ function AboutPage() {
   }, []);
 
   const lines = [
-    "I'm [Your Name] — a cybersecurity engineer and red teamer based in [Your City].",
-    "For the last [X] years I've helped startups and enterprises map their attack surface, then close it down.",
-    "My day job swings between writing exploits, reviewing architectures, and shipping code that has to survive contact with reality.",
-    "Outside of work I play CTFs, contribute to open-source security tools, and write up the interesting bugs I find.",
-    "If a system is worth attacking, it's worth doing it well — methodically, ethically, and with documentation that actually helps engineers fix it.",
+    "I'm Mostafa Mohamed Galal — a Communications & Electronics Engineering student with a deep focus on offensive security and red team operations.",
+    "My path is unusual: I'm balancing a heavy engineering curriculum (analog filters, RLC circuits, embedded systems) with self-directed cybersecurity training that has earned me eJPT certification and three #1 finishes on TryHackMe leaderboards.",
+    "I've shipped hands-on projects across both worlds — from a Smart Recon Vehicle and Butterworth band-pass filters on the engineering side, to the Shadow Core Framework, NM Analyzer, and a Payload Research Toolkit on the offensive side.",
+    "I report bugs responsibly (Snapchat SMTP open relay, among others), compete in CyberTalents and CyShield, and study reverse engineering, x86 assembly, and exploit development to keep my low-level skills sharp.",
+    "If a system is worth attacking, it's worth doing it well — methodically, ethically, and with an engineer's understanding of the hardware and software underneath.",
   ];
 
   return (
@@ -65,7 +65,7 @@ function AboutPage() {
         <SectionHeading
           eyebrow="whoami"
           title="The human behind the terminal"
-          description="A short story of how I ended up breaking and building systems for a living."
+          description="An engineering student turned offensive security practitioner."
         />
       </Reveal>
 
@@ -84,16 +84,16 @@ function AboutPage() {
               <div className="text-center">
                 <div className="mx-auto grid h-32 w-32 place-items-center rounded-full glass-panel gradient-border">
                   <span className="font-display text-4xl font-bold text-gradient-cyber">
-                    YN
+                    MG
                   </span>
                 </div>
                 <div className="mt-4 font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
-                  [Your Photo Here]
+                  Mostafa Galal
                 </div>
               </div>
             </div>
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-              <span>id::0xCAFEBABE</span>
+              <span>id::eJPT_certified</span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-2 w-2 animate-pulse-glow rounded-full bg-cyber-cyan" />
                 online
@@ -118,8 +118,8 @@ function AboutPage() {
             {[
               { Icon: Shield, label: "Ethics first" },
               { Icon: Brain, label: "Curious" },
-              { Icon: Lock, label: "Pragmatic" },
-              { Icon: Coffee, label: "Caffeinated" },
+              { Icon: Lock, label: "Methodical" },
+              { Icon: Coffee, label: "Persistent" },
             ].map(({ Icon, label }) => (
               <div
                 key={label}
@@ -138,14 +138,14 @@ function AboutPage() {
         <Reveal>
           <SectionHeading
             eyebrow="principles::core"
-            title="How I work with teams"
+            title="How I work"
           />
         </Reveal>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {[
-            { t: "Threat-model first", d: "Before tools, before scans — what are we actually defending and from whom?" },
-            { t: "Findings that ship", d: "Reports engineers can act on, not 80-page PDFs that gather dust." },
-            { t: "Build, don't just break", d: "Pair every finding with a path to remediation and, where useful, code." },
+            { t: "Engineer first, hacker second", d: "I understand systems from the transistor up — that's what makes the offensive side click." },
+            { t: "Learn by shipping", d: "Every concept becomes a project: from RLC filters to the Shadow Core Framework." },
+            { t: "Disclose responsibly", d: "Every bug I find — like the Snapchat SMTP relay — gets reported with a clear PoC and a fix path." },
           ].map((p, i) => (
             <Reveal key={p.t} delay={i * 0.08}>
               <div className="relative h-full rounded-2xl p-6 glass-panel gradient-border corner-brackets">

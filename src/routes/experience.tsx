@@ -12,17 +12,17 @@ if (typeof window !== "undefined") {
 export const Route = createFileRoute("/experience")({
   head: () => ({
     meta: [
-      { title: "Experience — [Your Name]" },
+      { title: "Experience — Mostafa Galal" },
       {
         name: "description",
         content:
-          "Career timeline of [Your Name] — security roles, milestones, and notable engagements.",
+          "Certifications, training, and competition milestones of Mostafa Galal — eJPT, ITI, Red Hat, and TryHackMe achievements.",
       },
-      { property: "og:title", content: "Experience — [Your Name]" },
+      { property: "og:title", content: "Experience — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Career timeline of [Your Name] — security roles, milestones, and notable engagements.",
+          "Certifications, training, and competition milestones of Mostafa Galal — eJPT, ITI, Red Hat, and TryHackMe achievements.",
       },
     ],
   }),
@@ -31,34 +31,58 @@ export const Route = createFileRoute("/experience")({
 
 const TIMELINE = [
   {
-    year: "2024 — present",
-    role: "Principal Security Engineer",
-    org: "[Company / Self]",
-    body: "[Describe scope: red team leadership, platform security, mentorship.]",
+    year: "Feb 2026",
+    role: "eJPT — eLearnSecurity Junior Penetration Tester",
+    org: "INE / eLearnSecurity",
+    body: "Earned the eJPT certification through hands-on, scenario-based assessment covering reconnaissance, network exploitation, web attacks, and post-exploitation.",
   },
   {
-    year: "2022 — 2024",
-    role: "Senior Offensive Security Engineer",
-    org: "[Company]",
-    body: "[Engagements led, internal tooling shipped, CVE disclosures.]",
+    year: "Dec 2025",
+    role: "Exploit Development: Buffer Overflows",
+    org: "Self-study course",
+    body: "Hands-on training on identifying and exploiting stack-based buffer overflow vulnerabilities — instruction pointer control, shellcode, debugging.",
   },
   {
-    year: "2020 — 2022",
-    role: "Application Security Engineer",
-    org: "[Company]",
-    body: "[Built secure SDLC, paved-road frameworks, threat modeling practice.]",
+    year: "Dec 2025",
+    role: "System Security & x86 Assembly Fundamentals",
+    org: "Self-study course",
+    body: "OS internals, memory layout, calling conventions, and x86 assembly — foundation for reverse engineering and exploit development.",
   },
   {
-    year: "2018 — 2020",
-    role: "Security Consultant",
-    org: "[Consultancy]",
-    body: "[Web, mobile, cloud assessments across industries.]",
+    year: "Sep 2025",
+    role: "TryHackMe — 1st Place, Sapphire League",
+    org: "TryHackMe",
+    body: "Achieved Epic-tier 1st place (rarity 0.8%) — completing a three-season streak across Bronze, Gold, and Sapphire leagues.",
   },
   {
-    year: "2016 — 2018",
-    role: "Software Engineer",
-    org: "[Company]",
-    body: "[Where I learned to build before I learned to break.]",
+    year: "Aug 2025",
+    role: "ITI Cybersecurity Training (90 hours)",
+    org: "Information Technology Institute (ITI)",
+    body: "Completed 90-hour program: Network Fundamentals (24h), Advanced Networking (24h), Intro to Cybersecurity (18h), Ethical Hacking (24h).",
+  },
+  {
+    year: "Jul 2025",
+    role: "Red Hat System Administration I",
+    org: "Mahara-Tech",
+    body: "RHCSA-aligned Linux administration — user management, file permissions, network configuration, system diagnostics.",
+  },
+  {
+    year: "Jul 2025",
+    role: "Cybersecurity For Beginners (35h)",
+    org: "Mahara-Tech / VMware / MCIT",
+    body: "Foundational 8-module cybersecurity program covering network security, threats, and best practices.",
+  },
+  {
+    year: "May 2025",
+    role: "Snapchat SMTP Open Relay — Responsibly Disclosed",
+    org: "Snapchat Bug Bounty",
+    body: "Discovered and reported an SMTP open relay on beta.snappublisher.snapchat.com with full PoC and remediation guidance.",
+  },
+  {
+    year: "Ongoing",
+    role: "Communications & Electronics Engineering",
+    org: "University Studies",
+    body: "Pursuing a degree in Communications & Electronics Engineering — analog filters, RLC circuits, embedded systems, digital logic.",
   },
 ];
 
@@ -92,13 +116,12 @@ function ExperiencePage() {
       <Reveal>
         <SectionHeading
           eyebrow="career::log"
-          title="A timeline of breaking and building"
-          description="The roles, the lessons, and the milestones along the way."
+          title="Certifications, training & milestones"
+          description="The roles, the courses, and the wins along the way."
         />
       </Reveal>
 
       <div className="relative mt-16 pl-10 sm:pl-0">
-        {/* Center line (desktop) / left line (mobile) */}
         <div className="absolute left-4 top-0 h-full w-px bg-border sm:left-1/2 sm:-translate-x-1/2">
           <div
             ref={lineRef}
@@ -111,8 +134,7 @@ function ExperiencePage() {
           {TIMELINE.map((item, i) => {
             const right = i % 2 === 1;
             return (
-              <li key={item.year} className="relative">
-                {/* Node */}
+              <li key={item.year + item.role} className="relative">
                 <div className="absolute left-4 top-3 -translate-x-1/2 sm:left-1/2">
                   <div className="grid h-4 w-4 place-items-center rounded-full bg-background ring-2 ring-cyber-cyan">
                     <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-cyber-cyan" />
