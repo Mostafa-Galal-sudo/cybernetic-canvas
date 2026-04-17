@@ -6,17 +6,17 @@ import { Check, Sword, ShieldCheck, BrainCircuit, ArrowRight } from "lucide-reac
 export const Route = createFileRoute("/services")({
   head: () => ({
     meta: [
-      { title: "Services — Hire [Your Name]" },
+      { title: "Services — Hire Mostafa Galal" },
       {
         name: "description",
         content:
-          "Pentesting, red team engagements, and security consulting — engagement models and what's included.",
+          "Pentesting, red team labs, and security mentoring with Mostafa Galal — eJPT certified.",
       },
-      { property: "og:title", content: "Services — Hire [Your Name]" },
+      { property: "og:title", content: "Services — Hire Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Pentesting, red team engagements, and security consulting — engagement models and what's included.",
+          "Pentesting, red team labs, and security mentoring with Mostafa Galal — eJPT certified.",
       },
     ],
   }),
@@ -26,11 +26,11 @@ export const Route = createFileRoute("/services")({
 const TIERS = [
   {
     Icon: ShieldCheck,
-    name: "Pentest",
-    tagline: "Time-boxed, scoped assessment of a defined target.",
+    name: "Penetration Testing",
+    tagline: "Time-boxed, scoped assessment of a defined web or network target.",
     bullets: [
-      "Web, API, mobile, or cloud target",
-      "OWASP-aligned methodology",
+      "Web app or external network scope",
+      "eJPT-aligned methodology",
       "Engineer-friendly remediation report",
       "Free re-test of fixes within 30 days",
     ],
@@ -39,12 +39,12 @@ const TIERS = [
   },
   {
     Icon: Sword,
-    name: "Red Team Engagement",
-    tagline: "Goal-oriented, multi-vector simulation against your org.",
+    name: "Red Team Lab Engagement",
+    tagline: "Goal-oriented, multi-vector simulation in lab/staging environments.",
     bullets: [
       "Custom objectives & rules of engagement",
-      "Phishing, infra, physical (optional)",
-      "Detection & response collaboration",
+      "Recon, exploitation, post-exploitation chain",
+      "Defender collaboration and detection notes",
       "Executive + technical debrief",
     ],
     cta: "Plan engagement",
@@ -52,15 +52,15 @@ const TIERS = [
   },
   {
     Icon: BrainCircuit,
-    name: "Security Consulting",
-    tagline: "Embedded advisory for your roadmap, architecture, and program.",
+    name: "Mentoring & CTF Coaching",
+    tagline: "1:1 mentoring for students and engineers entering offensive security.",
     bullets: [
-      "Threat modeling workshops",
-      "Architecture & code reviews",
-      "Security program maturity audit",
-      "Hiring & team mentoring",
+      "TryHackMe / HTB study plan",
+      "eJPT exam preparation",
+      "Bug bounty workflow review",
+      "CTF debriefs and writeup feedback",
     ],
-    cta: "Book consulting",
+    cta: "Book mentoring",
     highlight: false,
   },
 ];
@@ -72,7 +72,7 @@ function ServicesPage() {
         <SectionHeading
           eyebrow="engagements::open"
           title="Three ways to work together"
-          description="From a quick pentest to embedded advisory — pick the shape that fits your org."
+          description="From a focused pentest to mentoring — pick the shape that fits."
         />
       </Reveal>
 
@@ -125,7 +125,7 @@ function ServicesPage() {
             not sure which fits?
           </div>
           <h3 className="mt-2 font-display text-2xl font-semibold">
-            Tell me about your system — I'll tell you what I'd do first.
+            Tell me about your system — I'll tell you what I'd test first.
           </h3>
           <Link
             to="/contact"

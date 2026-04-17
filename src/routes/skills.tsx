@@ -7,23 +7,23 @@ import {
   ShieldCheck,
   Code2,
   Wrench,
-  Cloud,
+  Cpu,
 } from "lucide-react";
 
 export const Route = createFileRoute("/skills")({
   head: () => ({
     meta: [
-      { title: "Skills — [Your Name]" },
+      { title: "Skills — Mostafa Galal" },
       {
         name: "description",
         content:
-          "Offensive security, defensive engineering, languages, tooling, and cloud — the stack I work with.",
+          "Offensive security, networking, languages, tooling, and embedded systems — the stack Mostafa Galal works with.",
       },
-      { property: "og:title", content: "Skills — [Your Name]" },
+      { property: "og:title", content: "Skills — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Offensive security, defensive engineering, languages, tooling, and cloud — the stack I work with.",
+          "Offensive security, networking, languages, tooling, and embedded systems — the stack Mostafa Galal works with.",
       },
     ],
   }),
@@ -39,21 +39,23 @@ const CATEGORIES: Category[] = [
     Icon: Sword,
     title: "Offensive Security",
     skills: [
-      { name: "Web App Pentesting", level: 95, note: "OWASP Top 10, business logic, auth bypasses." },
-      { name: "Red Team Ops", level: 88, note: "C2, AD attack paths, evasion, OPSEC." },
-      { name: "Binary Exploitation", level: 78, note: "ROP, heap, kernel basics — CTF-grade." },
-      { name: "Mobile (iOS/Android)", level: 72, note: "Frida, Objection, MASTG." },
+      { name: "Penetration Testing", level: 88, note: "eJPT certified — methodology, recon, exploitation, reporting." },
+      { name: "Web Exploitation", level: 85, note: "OWASP Top 10, business logic, real-world bug bounty findings." },
+      { name: "Network Reconnaissance", level: 90, note: "Nmap, Subfinder, httpx, custom TCP scanners." },
+      { name: "Exploit Development", level: 72, note: "Stack-based buffer overflows, shellcode fundamentals." },
+      { name: "Reverse Engineering", level: 70, note: "x86 assembly, ELF analysis, symbol-table heuristics." },
+      { name: "Red Team Methodology", level: 80, note: "Adversary emulation, AD labs, post-exploitation." },
     ],
   },
   {
     key: "defensive",
     Icon: ShieldCheck,
-    title: "Defensive Engineering",
+    title: "Networking & Defense",
     skills: [
-      { name: "Threat Modeling", level: 92, note: "STRIDE, attack trees, ADRs." },
-      { name: "Detection Engineering", level: 80, note: "Sigma, Elastic, behavioral rules." },
-      { name: "IAM & Zero-Trust", level: 85, note: "Policy as code, scoped tokens." },
-      { name: "Secure SDLC", level: 90, note: "SAST/DAST/SCA, paved-road tooling." },
+      { name: "Network Fundamentals", level: 92, note: "TCP/IP, routing, switching — 24h ITI training." },
+      { name: "Advanced Networking", level: 85, note: "ITI advanced networking module (24h)." },
+      { name: "Linux System Admin", level: 88, note: "Red Hat RHCSA-aligned coursework." },
+      { name: "Cybersecurity Fundamentals", level: 90, note: "Mahara-Tech / VMware 35h foundational program." },
     ],
   },
   {
@@ -61,10 +63,11 @@ const CATEGORIES: Category[] = [
     Icon: Code2,
     title: "Languages",
     skills: [
-      { name: "Python", level: 95, note: "Tooling, automation, exploit dev." },
-      { name: "Go", level: 85, note: "C2 implants, internal services." },
-      { name: "Rust", level: 70, note: "Memory-safe tooling, evasion R&D." },
-      { name: "TypeScript", level: 88, note: "Full-stack, dashboards, internal tools." },
+      { name: "Python", level: 92, note: "Daily driver — tooling, automation, scanners, ML pipelines." },
+      { name: "Embedded C/C++", level: 85, note: "Smart Recon Vehicle, motor drivers, serial comms." },
+      { name: "JavaScript", level: 75, note: "Payload research, web exploitation context." },
+      { name: "Bash", level: 88, note: "Linux automation, framework deployment scripts." },
+      { name: "x86 Assembly", level: 65, note: "Reverse engineering, BOF exploit development." },
     ],
   },
   {
@@ -72,26 +75,26 @@ const CATEGORIES: Category[] = [
     Icon: Wrench,
     title: "Tooling",
     skills: [
-      { name: "Burp Suite", level: 95, note: "Daily driver, custom extensions." },
-      { name: "Cobalt Strike / Sliver", level: 82, note: "Engagements & opsec." },
-      { name: "Ghidra / IDA", level: 75, note: "Reverse engineering binaries." },
-      { name: "Nuclei / Semgrep", level: 88, note: "Custom templates & rules." },
+      { name: "Metasploit", level: 85, note: "Exploitation framework — eJPT lab work." },
+      { name: "Nmap", level: 92, note: "Service enumeration, OS detection, NSE scripts." },
+      { name: "Burp Suite", level: 80, note: "Web app testing, intercept, repeater workflows." },
+      { name: "OpenCV", level: 78, note: "Real-time computer vision (FaceBlur Live)." },
+      { name: "Subfinder / httpx / swaks", level: 88, note: "Recon and SMTP testing — Snapchat finding." },
     ],
   },
   {
-    key: "cloud",
-    Icon: Cloud,
-    title: "Cloud & Infra",
+    key: "embedded",
+    Icon: Cpu,
+    title: "Embedded & Electronics",
     skills: [
-      { name: "AWS Security", level: 90, note: "IAM, GuardDuty, attack paths." },
-      { name: "Kubernetes", level: 80, note: "Pod security, RBAC, supply chain." },
-      { name: "Terraform", level: 85, note: "IaC reviews, policy as code." },
-      { name: "Linux Internals", level: 90, note: "eBPF, namespaces, hardening." },
+      { name: "Analog Filter Design", level: 88, note: "RLC band-pass, 3rd-order Butterworth filters." },
+      { name: "Digital Logic Design", level: 85, note: "Logic gates, automation systems (Smart Curtain)." },
+      { name: "Frequency Response Analysis", level: 82, note: "Resonance, bandwidth, Q-factor, transfer functions." },
+      { name: "Bluetooth / HC-05", level: 80, note: "Wireless control for embedded vehicles." },
+      { name: "Circuit Simulation", level: 78, note: "Filter design and validation workflows." },
     ],
   },
 ];
-
-export default SkillsPage;
 
 function SkillsPage() {
   const [active, setActive] = useState<string>(CATEGORIES[0].key);
@@ -102,12 +105,11 @@ function SkillsPage() {
       <Reveal>
         <SectionHeading
           eyebrow="capabilities::matrix"
-          title="The stack I attack and defend with"
+          title="The stack I attack and build with"
           description="Hover any skill to read context. Switch categories to drill in."
         />
       </Reveal>
 
-      {/* Category tabs */}
       <div className="mt-10 flex flex-wrap gap-2">
         {CATEGORIES.map(({ key, Icon, title }) => {
           const isActive = key === active;
@@ -126,7 +128,6 @@ function SkillsPage() {
         })}
       </div>
 
-      {/* Grid */}
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
         {cat.skills.map((s, i) => (
           <Reveal key={s.name} delay={i * 0.05}>

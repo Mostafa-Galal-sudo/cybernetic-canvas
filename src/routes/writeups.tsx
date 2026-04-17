@@ -6,17 +6,17 @@ import { ArrowUpRight, Calendar, Tag } from "lucide-react";
 export const Route = createFileRoute("/writeups")({
   head: () => ({
     meta: [
-      { title: "Writeups — [Your Name]" },
+      { title: "Writeups — Mostafa Galal" },
       {
         name: "description",
         content:
-          "CTF solves, vulnerability research, and notes from the field by [Your Name].",
+          "Bug bounty findings, red team learnings, and CTF achievements by Mostafa Galal.",
       },
-      { property: "og:title", content: "Writeups — [Your Name]" },
+      { property: "og:title", content: "Writeups — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "CTF solves, vulnerability research, and notes from the field by [Your Name].",
+          "Bug bounty findings, red team learnings, and CTF achievements by Mostafa Galal.",
       },
     ],
   }),
@@ -25,52 +25,28 @@ export const Route = createFileRoute("/writeups")({
 
 const POSTS = [
   {
-    slug: "racing-the-jwt",
-    date: "2025-03-12",
-    tags: ["web", "auth"],
-    title: "Racing the JWT: a story of one millisecond",
+    slug: "snapchat-smtp-open-relay",
+    date: "2025-05-15",
+    tags: ["bug bounty", "smtp"],
+    title: "Snapchat SMTP Open Relay Vulnerability",
     excerpt:
-      "How a tiny race in a token refresh endpoint let us mint admin sessions on demand.",
+      "How a missing auth check on beta.snappublisher.snapchat.com let me relay arbitrary email through Snapchat's infrastructure.",
   },
   {
-    slug: "ebpf-rootkit-postmortem",
-    date: "2025-01-28",
-    tags: ["kernel", "linux"],
-    title: "An eBPF rootkit, and how we caught it",
+    slug: "tryhackme-three-season-streak",
+    date: "2025-09-01",
+    tags: ["tryhackme", "red team"],
+    title: "TryHackMe Leaderboards: 1st Place Across Three Seasons",
     excerpt:
-      "From the first weird metric to the kernel module pinned in /sys.",
+      "Bronze, Gold, and Sapphire — what it took to top the global leaderboard three seasons in a row.",
   },
   {
-    slug: "ctf-pwn-heap",
-    date: "2024-11-04",
-    tags: ["pwn", "ctf"],
-    title: "Heap feng shui in 2024 — still a thing",
+    slug: "journey-into-red-teaming",
+    date: "2025-05-20",
+    tags: ["learning", "red team"],
+    title: "My Journey into Red Teaming",
     excerpt:
-      "Walkthrough of the toughest pwn challenge in [CTF Name], with code.",
-  },
-  {
-    slug: "supply-chain-poisoning",
-    date: "2024-09-18",
-    tags: ["supply-chain", "ci"],
-    title: "Poisoning a supply chain through 3 lines of YAML",
-    excerpt:
-      "Why your GitHub Actions cache is more dangerous than you think.",
-  },
-  {
-    slug: "cloud-iam-attack",
-    date: "2024-07-02",
-    tags: ["aws", "iam"],
-    title: "Lateral movement via overly-helpful IAM roles",
-    excerpt:
-      "A red team engagement walkthrough, names changed to protect the guilty.",
-  },
-  {
-    slug: "fuzzing-grpc",
-    date: "2024-04-21",
-    tags: ["fuzzing", "grpc"],
-    title: "Fuzzing gRPC services without losing your mind",
-    excerpt:
-      "A reusable harness, a coverage tool, and a few crashes.",
+      "Balancing a Communications & Electronics Engineering degree with self-directed offensive security study.",
   },
 ];
 
@@ -80,8 +56,8 @@ function WriteupsPage() {
       <Reveal>
         <SectionHeading
           eyebrow="notes::field"
-          title="Writeups, research, and CTF solves"
-          description="Long-form notes from engagements I'm allowed to talk about — and the ones I'm not."
+          title="Writeups, research, and reflections"
+          description="Long-form notes from bug bounty work, competitions, and the learning process itself."
         />
       </Reveal>
 

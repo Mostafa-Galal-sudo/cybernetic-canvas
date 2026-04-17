@@ -4,22 +4,22 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Github, Linkedin, Twitter, Mail, Send } from "lucide-react";
+import { Github, Linkedin, Mail, Send, Award } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact — [Your Name]" },
+      { title: "Contact — Mostafa Galal" },
       {
         name: "description",
         content:
-          "Get in touch with [Your Name] for security engagements, consulting, and collaborations.",
+          "Get in touch with Mostafa Galal for security engagements, mentoring, and collaborations.",
       },
-      { property: "og:title", content: "Contact — [Your Name]" },
+      { property: "og:title", content: "Contact — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Get in touch with [Your Name] for security engagements, consulting, and collaborations.",
+          "Get in touch with Mostafa Galal for security engagements, mentoring, and collaborations.",
       },
     ],
   }),
@@ -45,7 +45,7 @@ function ContactPage() {
         <SectionHeading
           eyebrow="comms::open"
           title="Open a secure channel"
-          description="Engagements, collaborations, or just a hello — I read everything."
+          description="Engagements, mentoring, collaborations — I read everything."
         />
       </Reveal>
 
@@ -84,26 +84,17 @@ function ContactPage() {
                 channels
               </div>
               <ul className="mt-4 space-y-3">
-                <a
-                  href="mailto:hello@example.com"
-                  className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
-                >
-                  <span className="grid h-9 w-9 place-items-center rounded-md text-cyber-cyan glass-panel gradient-border transition-shadow group-hover:shadow-[0_0_20px_oklch(0.85_0.18_200/0.5)]">
-                    <Mail className="h-4 w-4" />
-                  </span>
-                  <span>
-                    <div className="font-mono text-xs text-muted-foreground">email</div>
-                    <div className="text-sm font-medium">[hello@yourname.dev]</div>
-                  </span>
-                </a>
                 {[
-                  { Icon: Github, label: "github", value: "[github.com/yourhandle]" },
-                  { Icon: Linkedin, label: "linkedin", value: "[linkedin.com/in/you]" },
-                  { Icon: Twitter, label: "x", value: "[@yourhandle]" },
-                ].map(({ Icon, label, value }) => (
+                  { Icon: Mail, label: "email", value: "Reach via form", href: "#" },
+                  { Icon: Github, label: "github", value: "github.com/MostafaGalal", href: "https://github.com/" },
+                  { Icon: Linkedin, label: "linkedin", value: "linkedin.com/in/mostafa-galal", href: "https://linkedin.com/" },
+                  { Icon: Award, label: "tryhackme", value: "tryhackme.com/p/MostafaGalal", href: "https://tryhackme.com/" },
+                ].map(({ Icon, label, value, href }) => (
                   <a
                     key={label}
-                    href="#"
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
                     className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-md text-cyber-cyan glass-panel gradient-border transition-shadow group-hover:shadow-[0_0_20px_oklch(0.85_0.18_200/0.5)]">
@@ -120,14 +111,19 @@ function ContactPage() {
 
             <div className="rounded-2xl p-6 glass-panel gradient-border">
               <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
-                pgp
+                credentials
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                For sensitive disclosures, encrypt with my key:
+                eJPT certified · ITI Cybersecurity (90h) · Red Hat SA-I · Communications & Electronics Engineering student.
               </p>
-              <pre className="mt-3 overflow-x-auto rounded-md bg-background/50 p-3 font-mono text-[11px] text-cyber-cyan">
-                FPR: [XXXX YYYY ZZZZ AAAA BBBB]
-              </pre>
+              <a
+                href="https://certs.ine.com/bdf79a3b-3819-422f-b284-44dec448edb1#acc.dEjlnfeV"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-cyber-cyan"
+              >
+                verify eJPT →
+              </a>
             </div>
           </div>
         </Reveal>
