@@ -4,7 +4,8 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { Spine, SpineCard } from "@/components/Spine";
+import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
+import { HelixCard } from "@/components/HelixCard";
 import { Sword, ShieldCheck, Code2, Wrench, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -122,106 +123,127 @@ function AnimatedBar({ level }: { level: number }) {
 
 function SkillCard({ skill }: { skill: Skill }) {
   return (
-    <TiltCard
-      intensity={7}
-      className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      transition={{ duration: 0.3, ease: EASE }}
+      style={{ transformStyle: "preserve-3d" }}
     >
-      <div className="p-6">
-        <div className="flex items-baseline justify-between">
-          <h3 className="font-display text-xl font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
-            {skill.name}
-          </h3>
-          <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
+      <TiltCard
+        intensity={7}
+        className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
+      >
+        <div className="p-6">
+          <div className="flex items-baseline justify-between">
+            <h3 className="font-display text-xl font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
+              {skill.name}
+            </h3>
+            <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
+          </div>
+          <AnimatedBar level={skill.level} />
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">
+            {skill.note}
+          </p>
         </div>
-        <AnimatedBar level={skill.level} />
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">
-          {skill.note}
-        </p>
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          background:
-            "radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), oklch(0.85 0.18 200 / 0.06), transparent 50%)",
-        }}
-      />
-    </TiltCard>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -translate-x-full rounded-2xl bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+        />
+      </TiltCard>
+    </motion.div>
   );
 }
 
 function SkillsPage() {
   const [active, setActive] = useState<string>(CATEGORIES[0].key);
   const cat = CATEGORIES.find((c) => c.key === active)!;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useScrollProgress(containerRef);
+  const isMobile = useIsMobile();
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <Reveal>
-        <SectionHeading
-          eyebrow="capabilities::matrix"
-          title="The stack I attack and build with"
-          description="Hover any skill to read context. Switch categories to drill in."
-        />
-      </Reveal>
+    <div ref={containerRef} className="relative" style={{ minHeight: "250vh" }}>
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            eyebrow="capabilities::matrix"
+            title="The stack I attack and build with"
+            description="Hover any skill to read context. Switch categories to drill in."
+          />
+        </Reveal>
 
-      <div className="mt-10 flex flex-wrap gap-2">
-        {CATEGORIES.map(({ key, Icon, title }) => {
-          const isActive = key === active;
-          return (
-            <motion.button
-              key={key}
-              onClick={() => setActive(key)}
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ duration: 0.2, ease: EASE }}
-              className={cn(
-                "group relative inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all duration-300",
-                isActive
-                  ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
-                  : "text-muted-foreground hover:text-foreground hover:shadow-[0_0_12px_oklch(0.85_0.18_200/0.15)]",
-              )}
-            >
-              <motion.span
-                animate={{ scale: isActive ? 1.2 : 1 }}
-                transition={{ duration: 0.3, ease: EASE }}
-                className="flex"
+        <div className="relative z-20 mt-10 flex flex-wrap gap-2">
+          {CATEGORIES.map(({ key, Icon, title }) => {
+            const isActive = key === active;
+            return (
+              <motion.button
+                key={key}
+                onClick={() => setActive(key)}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ duration: 0.2, ease: EASE }}
+                className={cn(
+                  "group relative inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all duration-300",
+                  isActive
+                    ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
+                    : "text-muted-foreground hover:text-foreground hover:shadow-[0_0_12px_oklch(0.85_0.18_200/0.15)]",
+                )}
               >
-                <Icon className="h-3.5 w-3.5" />
-              </motion.span>
-              {title}
-              {isActive && (
                 <motion.span
-                  layoutId="active-dot"
-                  className="ml-0.5 h-1 w-1 rounded-full bg-cyber-cyan"
-                />
-              )}
-            </motion.button>
-          );
-        })}
+                  animate={{ scale: isActive ? 1.2 : 1 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                  className="flex"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                </motion.span>
+                {title}
+                {isActive && (
+                  <motion.span
+                    layoutId="active-dot"
+                    className="ml-0.5 h-1 w-1 rounded-full bg-cyber-cyan"
+                  />
+                )}
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={active}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.25, ease: EASE }}
-          className="mt-12"
+      {!isMobile && (
+        <div
+          aria-hidden
+          className="pointer-events-none sticky top-0 h-screen w-full"
+          style={{ zIndex: 0 }}
         >
-          <Spine>
-            <ul className="space-y-12">
-              {cat.skills.map((s, i) => (
-                <li key={s.name}>
-                  <SpineCard index={i}>
-                    <SkillCard skill={s} />
-                  </SpineCard>
-                </li>
-              ))}
-            </ul>
-          </Spine>
-        </motion.div>
-      </AnimatePresence>
+          <HelixSpine scrollProgress={progress} />
+        </div>
+      )}
+
+      <div
+        className="relative mx-auto max-w-7xl px-4 sm:px-6"
+        style={{
+          marginTop: isMobile ? 0 : "-100vh",
+          zIndex: 10,
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.ul
+            key={active}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="space-y-20 pb-32 pt-8"
+          >
+            {cat.skills.map((s, i) => (
+              <li key={s.name}>
+                <HelixCard index={i} offset={280}>
+                  <SkillCard skill={s} />
+                </HelixCard>
+              </li>
+            ))}
+          </motion.ul>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

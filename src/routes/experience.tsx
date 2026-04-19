@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
-import { Spine, SpineCard } from "@/components/Spine";
+import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
+import { HelixCard } from "@/components/HelixCard";
 
 export const Route = createFileRoute("/experience")({
   head: () => ({
@@ -81,18 +83,24 @@ const TIMELINE = [
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 type TimelineItem = (typeof TIMELINE)[number];
 
 function TimelineCard({ item }: { item: TimelineItem }) {
   return (
     <motion.div
-      whileHover={{ z: 100, boxShadow: "0 0 50px oklch(0.85 0.18 200 / 0.32)" }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      whileHover={{
+        scale: 1.03,
+        boxShadow: "0 0 60px oklch(0.85 0.18 200 / 0.4)",
+      }}
+      transition={{ duration: 0.3, ease: EASE }}
+      style={{ transformStyle: "preserve-3d" }}
       className="group relative overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/5 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
       />
       <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
         {item.year}
@@ -111,27 +119,59 @@ function TimelineCard({ item }: { item: TimelineItem }) {
 }
 
 function ExperiencePage() {
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <Reveal>
-        <SectionHeading
-          eyebrow="career::log"
-          title="Certifications, training & milestones"
-          description="The roles, the courses, and the wins along the way."
-        />
-      </Reveal>
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useScrollProgress(containerRef);
+  const isMobile = useIsMobile();
 
-      <Spine className="mt-16">
-        <ul className="space-y-14">
+  return (
+    <div ref={containerRef} className="relative" style={{ minHeight: "300vh" }}>
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            eyebrow="career::log"
+            title="Certifications, training & milestones"
+            description="The roles, the courses, and the wins along the way."
+          />
+        </Reveal>
+      </div>
+
+      {!isMobile && (
+        <div
+          aria-hidden
+          className="pointer-events-none sticky top-0 h-screen w-full"
+          style={{ zIndex: 0 }}
+        >
+          <HelixSpine scrollProgress={progress} />
+        </div>
+      )}
+
+      <div
+        className="relative mx-auto max-w-7xl px-4 sm:px-6"
+        style={{
+          marginTop: isMobile ? 0 : "-100vh",
+          zIndex: 10,
+        }}
+      >
+        <ul className="space-y-20 pb-32 pt-8">
           {TIMELINE.map((item, i) => (
-            <li key={item.year + item.role}>
-              <SpineCard index={i}>
+            <li key={item.year + item.role} className="relative">
+              {/* Year label floating on the spine centerline (desktop only) */}
+              {!isMobile && (
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 top-2 -translate-x-1/2 font-mono text-xs uppercase tracking-[0.3em] text-cyber-cyan"
+                  style={{ textShadow: "0 0 12px oklch(0.85 0.18 200 / 0.6)" }}
+                >
+                  {item.year}
+                </div>
+              )}
+              <HelixCard index={i} offset={300}>
                 <TimelineCard item={item} />
-              </SpineCard>
+              </HelixCard>
             </li>
           ))}
         </ul>
-      </Spine>
+      </div>
     </div>
   );
 }
