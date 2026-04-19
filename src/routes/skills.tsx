@@ -98,7 +98,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const gridVariants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.18, ease: "easeIn" } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.18, ease: EASE } },
 };
 
 const cardVariants = {
