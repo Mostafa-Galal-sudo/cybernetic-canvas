@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { Spine, SpineCard } from "@/components/Spine";
+import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
+import { HelixCard } from "@/components/HelixCard";
 import { ArrowUpRight, Calendar, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/writeups")({
@@ -63,86 +65,135 @@ const tagVariants = {
 type Post = (typeof POSTS)[number];
 
 function WriteupCard({ post }: { post: Post }) {
+  const [swung, setSwung] = useState(false);
+
   return (
-    <TiltCard intensity={6} className="group h-full rounded-2xl">
-      <Link
-        to="/writeups/$slug"
-        params={{ slug: post.slug }}
-        className="relative flex h-full flex-col overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/6 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-        />
-
-        <motion.div
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.5 }}
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.2 } } }}
-          className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      transition={{ duration: 0.3, ease: EASE }}
+      style={{ transformStyle: "preserve-3d" }}
+      onAnimationComplete={() => setSwung(true)}
+    >
+      <TiltCard intensity={6} className="group h-full rounded-2xl">
+        <Link
+          to="/writeups/$slug"
+          params={{ slug: post.slug }}
+          className="relative flex h-full flex-col overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
+          onMouseEnter={() => setSwung(true)}
         >
-          <motion.span variants={tagVariants} className="inline-flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {post.date}
-          </motion.span>
-          {post.tags.map((tag) => (
-            <motion.span
-              key={tag}
-              variants={tagVariants}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-cyber-cyan ring-1 ring-cyber-cyan/30 bg-cyber-cyan/5"
-            >
-              <Tag className="h-2.5 w-2.5" />
-              {tag}
-            </motion.span>
-          ))}
-        </motion.div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+          />
 
-        <h3 className="mt-4 font-display text-2xl font-semibold leading-snug transition-colors duration-300 group-hover:text-gradient-cyber">
-          {post.title}
-        </h3>
-
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/75">
-          {post.excerpt}
-        </p>
-
-        <div className="mt-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-cyber-cyan">
-          Read writeup
-          <motion.span
-            className="inline-flex"
-            whileHover={{ x: 3, y: -3 }}
-            transition={{ duration: 0.2, ease: EASE }}
+          <motion.div
+            initial="hidden"
+            animate={swung ? "show" : "hidden"}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }}
+            className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
           >
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </motion.span>
-        </div>
-      </Link>
-    </TiltCard>
+            <motion.span variants={tagVariants} className="inline-flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {post.date}
+            </motion.span>
+            {post.tags.map((tag) => (
+              <motion.span
+                key={tag}
+                variants={tagVariants}
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-cyber-cyan ring-1 ring-cyber-cyan/30 bg-cyber-cyan/5"
+              >
+                <Tag className="h-2.5 w-2.5" />
+                {tag}
+              </motion.span>
+            ))}
+          </motion.div>
+
+          <h3 className="mt-4 font-display text-2xl font-semibold leading-snug transition-colors duration-300 group-hover:text-gradient-cyber">
+            {post.title}
+          </h3>
+
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/75">
+            {post.excerpt}
+          </p>
+
+          <div className="mt-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-cyber-cyan">
+            Read writeup
+            <motion.span
+              className="inline-flex"
+              whileHover={{ x: 3, y: -3 }}
+              transition={{ duration: 0.2, ease: EASE }}
+            >
+              <ArrowUpRight className="h-3.5 w-3.5" />
+            </motion.span>
+          </div>
+        </Link>
+      </TiltCard>
+    </motion.div>
   );
 }
 
 function WriteupsPage() {
-  return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-      <Reveal>
-        <SectionHeading
-          eyebrow="notes::field"
-          title="Writeups, research, and reflections"
-          description="Long-form notes from bug bounty work, competitions, and the learning process itself."
-        />
-      </Reveal>
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useScrollProgress(containerRef);
+  const isMobile = useIsMobile();
+  const [swungIdx, setSwungIdx] = useState<Set<number>>(new Set());
 
-      <Spine className="mt-16">
-        <ul className="space-y-14">
+  const markSwung = (i: number) => {
+    setSwungIdx((s) => {
+      if (s.has(i)) return s;
+      const n = new Set(s);
+      n.add(i);
+      return n;
+    });
+  };
+
+  return (
+    <div ref={containerRef} className="relative" style={{ minHeight: "200vh" }}>
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            eyebrow="notes::field"
+            title="Writeups, research, and reflections"
+            description="Long-form notes from bug bounty work, competitions, and the learning process itself."
+          />
+        </Reveal>
+      </div>
+
+      {/* Sticky 3D helix backdrop */}
+      {!isMobile && (
+        <div
+          aria-hidden
+          className="pointer-events-none sticky top-0 h-screen w-full"
+          style={{ zIndex: 0 }}
+        >
+          <HelixSpine scrollProgress={progress} />
+        </div>
+      )}
+
+      {/* Content layered above the helix */}
+      <div
+        className="relative mx-auto max-w-7xl px-4 sm:px-6"
+        style={{
+          marginTop: isMobile ? 0 : "-100vh",
+          zIndex: 10,
+        }}
+      >
+        <ul className="space-y-24 pb-32 pt-8">
           {POSTS.map((p, i) => (
             <li key={p.slug}>
-              <SpineCard index={i}>
+              <HelixCard
+                index={i}
+                offset={280}
+                onSwingComplete={() => markSwung(i)}
+              >
                 <WriteupCard post={p} />
-              </SpineCard>
+              </HelixCard>
+              {/* swungIdx triggers re-render so children can pick up state */}
+              <span aria-hidden className="hidden">{swungIdx.has(i) ? "y" : "n"}</span>
             </li>
           ))}
         </ul>
-      </Spine>
+      </div>
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
+import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
+import { HelixCard } from "@/components/HelixCard";
 import {
   Dialog,
   DialogContent,
@@ -229,91 +232,185 @@ const STATUS_COLOR: Record<Project["status"], string> = {
   archived: "bg-muted-foreground",
 };
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const tagVariants = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE } },
+};
+
+function ProjectCard({
+  project,
+  onOpen,
+  swung,
+}: {
+  project: Project;
+  onOpen: () => void;
+  swung: boolean;
+}) {
+  return (
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      transition={{ duration: 0.3, ease: EASE }}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <TiltCard className="group h-full">
+        <button
+          onClick={onOpen}
+          className="relative block h-full w-full overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets transition-shadow hover:shadow-[0_0_40px_oklch(0.85_0.18_200/0.4)]"
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full z-10"
+          />
+          <div
+            aria-hidden
+            className="aspect-[16/10] w-full"
+            style={{ background: project.gradient }}
+          >
+            <div className="grid h-full place-items-center">
+              <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/70">
+                {project.code}
+              </span>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span>{project.category}</span>
+              <span className="flex items-center gap-1.5">
+                <span
+                  className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[project.status]}`}
+                />
+                {project.status}
+              </span>
+            </div>
+            <h3 className="mt-3 font-display text-xl font-semibold leading-snug">
+              {project.title}
+            </h3>
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              {project.tagline}
+            </p>
+            <motion.div
+              initial="hidden"
+              animate={swung ? "show" : "hidden"}
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
+              }}
+              className="mt-4 flex flex-wrap gap-1.5"
+            >
+              {project.tech.slice(0, 3).map((t) => (
+                <motion.span
+                  key={t}
+                  variants={tagVariants}
+                  className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                >
+                  {t}
+                </motion.span>
+              ))}
+              {project.tech.length > 3 && (
+                <motion.span
+                  variants={tagVariants}
+                  className="font-mono text-[10px] text-muted-foreground"
+                >
+                  +{project.tech.length - 3}
+                </motion.span>
+              )}
+            </motion.div>
+          </div>
+        </button>
+      </TiltCard>
+    </motion.div>
+  );
+}
+
+function ProjectSlot({
+  project,
+  index,
+  onOpen,
+}: {
+  project: Project;
+  index: number;
+  onOpen: () => void;
+}) {
+  const [swung, setSwung] = useState(false);
+  return (
+    <HelixCard index={index} offset={320} onSwingComplete={() => setSwung(true)}>
+      <ProjectCard project={project} onOpen={onOpen} swung={swung} />
+    </HelixCard>
+  );
+}
+
 function ProjectsPage() {
   const [open, setOpen] = useState<Project | null>(null);
   const [filter, setFilter] = useState<"all" | "security" | "technical">("all");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const progress = useScrollProgress(containerRef);
+  const isMobile = useIsMobile();
 
   const filtered = PROJECTS.filter((p) => filter === "all" || p.category === filter);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
-      <Reveal>
-        <SectionHeading
-          eyebrow="repo::index"
-          title="11 projects across security & engineering"
-          description="From red team tooling to analog filters — click any card for the full breakdown."
-        />
-      </Reveal>
+    <div ref={containerRef} className="relative" style={{ minHeight: "400vh" }}>
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <SectionHeading
+            eyebrow="repo::index"
+            title="11 projects across security & engineering"
+            description="From red team tooling to analog filters — click any card for the full breakdown."
+          />
+        </Reveal>
 
-      <div className="mt-10 flex flex-wrap gap-2">
-        {(["all", "security", "technical"] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => setFilter(k)}
-            className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all glass-panel gradient-border ${
-              filter === k
-                ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {k}
-          </button>
-        ))}
+        <div className="relative z-20 mt-10 flex flex-wrap gap-2">
+          {(["all", "security", "technical"] as const).map((k) => (
+            <button
+              key={k}
+              onClick={() => setFilter(k)}
+              className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all glass-panel gradient-border ${
+                filter === k
+                  ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {filtered.map((p, i) => (
-          <Reveal key={p.id} delay={i * 0.05}>
-            <TiltCard className="group h-full">
-              <button
-                onClick={() => setOpen(p)}
-                className="relative block h-full w-full overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets transition-shadow hover:shadow-[0_0_40px_oklch(0.85_0.18_200/0.3)]"
-              >
-                <div
-                  aria-hidden
-                  className="aspect-[16/10] w-full"
-                  style={{ background: p.gradient }}
-                >
-                  <div className="grid h-full place-items-center">
-                    <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/70">
-                      {p.code}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                    <span>{p.category}</span>
-                    <span className="flex items-center gap-1.5">
-                      <span className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[p.status]}`} />
-                      {p.status}
-                    </span>
-                  </div>
-                  <h3 className="mt-3 font-display text-xl font-semibold leading-snug">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                    {p.tagline}
-                  </p>
-                  <div className="mt-4 flex flex-wrap gap-1.5">
-                    {p.tech.slice(0, 3).map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                    {p.tech.length > 3 && (
-                      <span className="font-mono text-[10px] text-muted-foreground">
-                        +{p.tech.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </button>
-            </TiltCard>
-          </Reveal>
-        ))}
+      {!isMobile && (
+        <div
+          aria-hidden
+          className="pointer-events-none sticky top-0 h-screen w-full"
+          style={{ zIndex: 0 }}
+        >
+          <HelixSpine scrollProgress={progress} />
+        </div>
+      )}
+
+      <div
+        className="relative mx-auto max-w-7xl px-4 sm:px-6"
+        style={{
+          marginTop: isMobile ? 0 : "-100vh",
+          zIndex: 10,
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.ul
+            key={filter}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            className="space-y-20 pb-32 pt-8"
+          >
+            {filtered.map((p, i) => (
+              <li key={p.id}>
+                <ProjectSlot project={p} index={i} onOpen={() => setOpen(p)} />
+              </li>
+            ))}
+          </motion.ul>
+        </AnimatePresence>
       </div>
 
       <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
@@ -322,9 +419,13 @@ function ProjectsPage() {
             <>
               <DialogHeader>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-cyber-cyan">
-                  <span>{open.code} · {open.category}</span>
+                  <span>
+                    {open.code} · {open.category}
+                  </span>
                   <span className="flex items-center gap-1.5">
-                    <span className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[open.status]}`} />
+                    <span
+                      className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[open.status]}`}
+                    />
                     {open.status}
                   </span>
                 </div>
