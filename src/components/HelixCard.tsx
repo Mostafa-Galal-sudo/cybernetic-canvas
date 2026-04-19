@@ -93,7 +93,7 @@ export function HelixCard({
     return () => ctx.revert();
   }, [even, isMobile, onSwingComplete]);
 
-  // Compute layout offset
+  // Compute layout offset for the OUTER wrapper (so GSAP's `x` on the inner card stays free)
   const desktopOffset = isMobile ? 0 : even ? -offset : offset;
 
   return (
@@ -103,13 +103,15 @@ export function HelixCard({
       style={{ perspective: "1200px" }}
     >
       <div
-        ref={cardRef}
-        className={`will-change-transform [transform-style:preserve-3d] w-full sm:max-w-md ${className}`}
-        style={{
-          transform: `translateX(${desktopOffset}px)`,
-        }}
+        className="w-full sm:max-w-md"
+        style={{ transform: `translateX(${desktopOffset}px)` }}
       >
-        {children}
+        <div
+          ref={cardRef}
+          className={`will-change-transform [transform-style:preserve-3d] ${className}`}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
