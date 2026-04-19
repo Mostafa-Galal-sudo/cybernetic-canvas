@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
+import { TiltCard } from "@/components/TiltCard";
 import { ArrowUpRight, Calendar, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/writeups")({
@@ -50,7 +53,101 @@ const POSTS = [
   },
 ];
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const gridVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 52, scale: 0.93, filter: "blur(8px)" },
+  show: {
+    opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
+    transition: { duration: 0.7, ease: EASE },
+  },
+};
+
+const tagVariants = {
+  hidden: { opacity: 0, x: -8 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.4, ease: EASE } },
+};
+
+type Post = (typeof POSTS)[number];
+
+function WriteupCard({ post }: { post: Post }) {
+  return (
+    <motion.div variants={cardVariants} className="h-full">
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        transition={{ duration: 0.28, ease: EASE }}
+        className="h-full"
+      >
+        <TiltCard intensity={6} className="group h-full rounded-2xl">
+          <Link
+            to="/writeups/$slug"
+            params={{ slug: post.slug }}
+            className="relative flex h-full flex-col overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
+          >
+            {/* Hover glow sweep */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/6 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+            />
+
+            {/* Meta row */}
+            <motion.div
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+              className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+            >
+              <motion.span variants={tagVariants} className="inline-flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {post.date}
+              </motion.span>
+              {post.tags.map((tag) => (
+                <motion.span
+                  key={tag}
+                  variants={tagVariants}
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-cyber-cyan ring-1 ring-cyber-cyan/30 bg-cyber-cyan/5"
+                >
+                  <Tag className="h-2.5 w-2.5" />
+                  {tag}
+                </motion.span>
+              ))}
+            </motion.div>
+
+            {/* Title */}
+            <h3 className="mt-4 font-display text-2xl font-semibold leading-snug transition-colors duration-300 group-hover:text-gradient-cyber">
+              {post.title}
+            </h3>
+
+            {/* Excerpt */}
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/75">
+              {post.excerpt}
+            </p>
+
+            {/* CTA row */}
+            <div className="mt-6 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-cyber-cyan">
+              Read writeup
+              <motion.span
+                className="inline-flex"
+                whileHover={{ x: 3, y: -3 }}
+                transition={{ duration: 0.2, ease: EASE }}
+              >
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </motion.span>
+            </div>
+          </Link>
+        </TiltCard>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function WriteupsPage() {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(gridRef, { once: true, amount: 0.1 });
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
       <Reveal>
@@ -61,34 +158,17 @@ function WriteupsPage() {
         />
       </Reveal>
 
-      <div className="mt-12 grid gap-4 md:grid-cols-2">
-        {POSTS.map((p, i) => (
-          <Reveal key={p.slug} delay={i * 0.05}>
-            <Link
-              to="/writeups/$slug"
-              params={{ slug: p.slug }}
-              className="group relative block h-full overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets transition-shadow hover:shadow-[0_0_40px_oklch(0.85_0.18_200/0.25)]"
-            >
-              <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Calendar className="h-3 w-3" /> {p.date}
-                </span>
-                <span className="inline-flex items-center gap-1 text-cyber-cyan">
-                  <Tag className="h-3 w-3" /> {p.tags.join(" / ")}
-                </span>
-              </div>
-              <h3 className="mt-3 font-display text-2xl font-semibold leading-snug transition-colors group-hover:text-gradient-cyber">
-                {p.title}
-              </h3>
-              <p className="mt-2 text-sm text-muted-foreground">{p.excerpt}</p>
-              <div className="mt-5 inline-flex items-center gap-1 font-mono text-xs uppercase tracking-wider text-cyber-cyan">
-                Read writeup{" "}
-                <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </div>
-            </Link>
-          </Reveal>
+      <motion.div
+        ref={gridRef}
+        variants={gridVariants}
+        initial="hidden"
+        animate={inView ? "show" : "hidden"}
+        className="mt-12 grid gap-5 md:grid-cols-2"
+      >
+        {POSTS.map((p) => (
+          <WriteupCard key={p.slug} post={p} />
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
