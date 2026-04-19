@@ -1,12 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
-
-if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
+import { Spine, SpineCard } from "@/components/Spine";
 
 export const Route = createFileRoute("/experience")({
   head: () => ({
@@ -85,111 +81,36 @@ const TIMELINE = [
   },
 ];
 
-const EASE = [0.22, 1, 0.36, 1] as const;
-
 type TimelineItem = (typeof TIMELINE)[number];
 
-function TimelineCard({ item, index }: { item: TimelineItem; index: number }) {
-  const right = index % 2 === 1;
-
+function TimelineCard({ item }: { item: TimelineItem }) {
   return (
-    <li className="relative">
-      {/* Node */}
-      <div className="absolute left-4 top-5 -translate-x-1/2 sm:left-1/2 z-10">
-        {/* outer ping ring */}
-        <span
-          className="absolute -inset-2 rounded-full border border-cyber-cyan/25 animate-ping"
-          style={{ animationDuration: "2.5s", animationDelay: `${index * 0.3}s` }}
-        />
-        {/* inner ring */}
-        <span className="absolute -inset-1 rounded-full border border-cyber-cyan/20" />
-        <div className="grid h-4 w-4 place-items-center rounded-full bg-background ring-2 ring-cyber-cyan relative">
-          <span className="h-1.5 w-1.5 rounded-full bg-cyber-cyan animate-pulse" />
-        </div>
+    <motion.div
+      whileHover={{ z: 100, boxShadow: "0 0 50px oklch(0.85 0.18 200 / 0.32)" }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="group relative overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/5 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+      />
+      <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
+        {item.year}
       </div>
-
-      {/* Card */}
-      <motion.div
-        initial={{
-          opacity: 0,
-          x: right ? 70 : -70,
-          filter: "blur(4px)",
-        }}
-        whileInView={{
-          opacity: 1,
-          x: 0,
-          filter: "blur(0px)",
-        }}
-        viewport={{ once: false, amount: 0.25 }}
-        transition={{ duration: 0.75, ease: EASE }}
-        className={cn(
-          "sm:w-1/2",
-          right ? "sm:ml-auto sm:pl-12" : "sm:pr-12",
-        )}
-      >
-        <motion.div
-          whileHover={{
-            scale: 1.025,
-            boxShadow: "0 0 40px oklch(0.85 0.18 200 / 0.22)",
-          }}
-          transition={{ duration: 0.3, ease: EASE }}
-          className="group relative overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
-        >
-          {/* scan-line sweep on hover */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/5 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
-          />
-
-          <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
-            {item.year}
-          </div>
-          <h3 className="mt-2 font-display text-xl font-semibold leading-snug">
-            {item.role}
-          </h3>
-          <div className="mt-1 font-mono text-sm text-muted-foreground">
-            @ {item.org}
-          </div>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/80">
-            {item.body}
-          </p>
-        </motion.div>
-      </motion.div>
-    </li>
+      <h3 className="mt-2 font-display text-xl font-semibold leading-snug">
+        {item.role}
+      </h3>
+      <div className="mt-1 font-mono text-sm text-muted-foreground">
+        @ {item.org}
+      </div>
+      <p className="mt-3 text-sm leading-relaxed text-foreground/80">
+        {item.body}
+      </p>
+    </motion.div>
   );
 }
 
-// Helper needed inside this file
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
 function ExperiencePage() {
-  const lineRef = useRef<HTMLDivElement>(null);
-
-  // GSAP scroll-scrubbed line draw — kept because scrub needs gsap
-  useEffect(() => {
-    const el = lineRef.current;
-    if (!el) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el,
-        { scaleY: 0 },
-        {
-          scaleY: 1,
-          ease: "none",
-          scrollTrigger: {
-            trigger: el.parentElement,
-            start: "top 65%",
-            end: "bottom 65%",
-            scrub: true,
-          },
-        },
-      );
-    });
-    return () => ctx.revert();
-  }, []);
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <Reveal>
@@ -200,22 +121,17 @@ function ExperiencePage() {
         />
       </Reveal>
 
-      <div className="relative mt-16 pl-10 sm:pl-0">
-        {/* Scrubbed timeline axis */}
-        <div className="absolute left-4 top-0 h-full w-px bg-border/40 sm:left-1/2 sm:-translate-x-1/2">
-          <div
-            ref={lineRef}
-            className="h-full w-full origin-top bg-gradient-to-b from-cyber-cyan via-cyber-violet to-cyber-magenta"
-            style={{ boxShadow: "0 0 14px var(--cyber-cyan)" }}
-          />
-        </div>
-
+      <Spine className="mt-16">
         <ul className="space-y-14">
           {TIMELINE.map((item, i) => (
-            <TimelineCard key={item.year + item.role} item={item} index={i} />
+            <li key={item.year + item.role}>
+              <SpineCard index={i}>
+                <TimelineCard item={item} />
+              </SpineCard>
+            </li>
           ))}
         </ul>
-      </div>
+      </Spine>
     </div>
   );
 }

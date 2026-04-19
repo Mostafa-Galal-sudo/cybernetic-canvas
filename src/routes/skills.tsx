@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
+import { Spine, SpineCard } from "@/components/Spine";
 import { Sword, ShieldCheck, Code2, Wrench, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -95,20 +96,6 @@ const CATEGORIES: Category[] = [
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const gridVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.18, ease: EASE } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 44, scale: 0.94, filter: "blur(6px)" },
-  show: {
-    opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
-    transition: { duration: 0.65, ease: EASE },
-  },
-};
-
 function AnimatedBar({ level }: { level: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "0px 0px -8% 0px" });
@@ -135,39 +122,31 @@ function AnimatedBar({ level }: { level: number }) {
 
 function SkillCard({ skill }: { skill: Skill }) {
   return (
-    <motion.div variants={cardVariants} className="h-full">
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.25, ease: EASE }}
-        className="h-full"
-      >
-        <TiltCard
-          intensity={7}
-          className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
-        >
-          <div className="p-6">
-            <div className="flex items-baseline justify-between">
-              <h3 className="font-display text-xl font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
-                {skill.name}
-              </h3>
-              <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
-            </div>
-            <AnimatedBar level={skill.level} />
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">
-              {skill.note}
-            </p>
-          </div>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-            style={{
-              background:
-                "radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), oklch(0.85 0.18 200 / 0.06), transparent 50%)",
-            }}
-          />
-        </TiltCard>
-      </motion.div>
-    </motion.div>
+    <TiltCard
+      intensity={7}
+      className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
+    >
+      <div className="p-6">
+        <div className="flex items-baseline justify-between">
+          <h3 className="font-display text-xl font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
+            {skill.name}
+          </h3>
+          <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
+        </div>
+        <AnimatedBar level={skill.level} />
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">
+          {skill.note}
+        </p>
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{
+          background:
+            "radial-gradient(600px circle at var(--mx, 50%) var(--my, 50%), oklch(0.85 0.18 200 / 0.06), transparent 50%)",
+        }}
+      />
+    </TiltCard>
   );
 }
 
@@ -176,7 +155,7 @@ function SkillsPage() {
   const cat = CATEGORIES.find((c) => c.key === active)!;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <Reveal>
         <SectionHeading
           eyebrow="capabilities::matrix"
@@ -196,7 +175,7 @@ function SkillsPage() {
               whileTap={{ scale: 0.96 }}
               transition={{ duration: 0.2, ease: EASE }}
               className={cn(
-                "group inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all duration-300",
+                "group relative inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all duration-300",
                 isActive
                   ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
                   : "text-muted-foreground hover:text-foreground hover:shadow-[0_0_12px_oklch(0.85_0.18_200/0.15)]",
@@ -224,15 +203,23 @@ function SkillsPage() {
       <AnimatePresence mode="wait">
         <motion.div
           key={active}
-          variants={gridVariants}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-          className="mt-10 grid gap-4 sm:grid-cols-2"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.25, ease: EASE }}
+          className="mt-12"
         >
-          {cat.skills.map((s) => (
-            <SkillCard key={s.name} skill={s} />
-          ))}
+          <Spine>
+            <ul className="space-y-12">
+              {cat.skills.map((s, i) => (
+                <li key={s.name}>
+                  <SpineCard index={i}>
+                    <SkillCard skill={s} />
+                  </SpineCard>
+                </li>
+              ))}
+            </ul>
+          </Spine>
         </motion.div>
       </AnimatePresence>
     </div>
