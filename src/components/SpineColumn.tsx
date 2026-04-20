@@ -8,10 +8,15 @@ import * as THREE from "three";
  * 14 vertebrae stacked along Y, intervertebral discs between them,
  * spinal-cord channel through the middle, and faint nerve roots at each level.
  * The whole column sways gently with scroll progress (0..1).
+ *
+ * Scroll progress is delivered via a ref-shaped object so we can update it
+ * every frame WITHOUT triggering React re-renders of consumers.
  */
 
+export type ScrollProgressRef = { current: number };
+
 type SpineColumnProps = {
-  scrollProgress: number;
+  progressRef: ScrollProgressRef;
 };
 
 const VERTEBRA_COUNT = 14;
@@ -20,6 +25,10 @@ const START_Y = 3.5;
 
 const CYBER_CYAN = "#22d3ee";
 const CYBER_VIOLET = "#a78bfa";
+// Realistic bone tones
+const BONE_BASE = "#e8dcc4"; // ivory bone
+const BONE_DEEP = "#a89878"; // bottom darker
+const DISC_GEL = "#3a2540"; // intervertebral disc (gel-like)
 
 function Vertebra({
   y,
@@ -41,7 +50,7 @@ function Vertebra({
   return (
     <group position={[0, y, 0]}>
       {/* Vertebral body */}
-      <mesh geometry={bodyGeom} material={bodyMat} />
+      <mesh geometry={bodyGeom} material={bodyMat} castShadow receiveShadow />
       {/* Spinous process — points back-down */}
       <mesh
         geometry={processGeom}
@@ -66,24 +75,24 @@ function Vertebra({
   );
 }
 
-function Column({ scrollProgress }: SpineColumnProps) {
+function Column({ progressRef }: SpineColumnProps) {
   const groupRef = useRef<THREE.Group>(null);
 
-  // Geometries (shared)
+  // Geometries — slightly higher segment count for smoother bone
   const bodyGeom = useMemo(
-    () => new THREE.CylinderGeometry(0.35, 0.38, 0.28, 16),
+    () => new THREE.CylinderGeometry(0.35, 0.38, 0.28, 24),
     [],
   );
   const processGeom = useMemo(
-    () => new THREE.CylinderGeometry(0.04, 0.07, 0.45, 8),
+    () => new THREE.CylinderGeometry(0.04, 0.07, 0.45, 10),
     [],
   );
   const wingGeom = useMemo(
-    () => new THREE.CylinderGeometry(0.035, 0.05, 0.35, 8),
+    () => new THREE.CylinderGeometry(0.035, 0.05, 0.35, 10),
     [],
   );
   const discGeom = useMemo(
-    () => new THREE.CylinderGeometry(0.32, 0.32, 0.1, 24),
+    () => new THREE.CylinderGeometry(0.32, 0.32, 0.1, 32),
     [],
   );
   const cordGeom = useMemo(() => {
@@ -91,53 +100,63 @@ function Column({ scrollProgress }: SpineColumnProps) {
       new THREE.Vector3(0, 4, 0),
       new THREE.Vector3(0, -4, 0),
     ]);
-    return new THREE.TubeGeometry(curve, 32, 0.04, 8, false);
+    return new THREE.TubeGeometry(curve, 48, 0.04, 12, false);
   }, []);
 
-  // Materials
+  // Materials — realistic bone (creamy, slightly rough, low metalness, faint cyan rim emissive)
   const bodyMat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#0a0f1a"),
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(BONE_BASE),
         emissive: new THREE.Color(CYBER_CYAN),
-        emissiveIntensity: 0.4,
-        roughness: 0.3,
-        metalness: 0.8,
+        emissiveIntensity: 0.08,
+        roughness: 0.78,
+        metalness: 0.05,
+        clearcoat: 0.15,
+        clearcoatRoughness: 0.6,
+        sheen: 0.2,
+        sheenColor: new THREE.Color("#fff5d6"),
       }),
     [],
   );
   const spineProcessMat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#0a0f1a"),
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(BONE_DEEP),
         emissive: new THREE.Color(CYBER_CYAN),
-        emissiveIntensity: 0.6,
-        roughness: 0.4,
-        metalness: 0.7,
+        emissiveIntensity: 0.12,
+        roughness: 0.85,
+        metalness: 0.04,
       }),
     [],
   );
   const wingMat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#0a0f1a"),
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(BONE_DEEP),
         emissive: new THREE.Color(CYBER_CYAN),
-        emissiveIntensity: 0.5,
-        roughness: 0.4,
-        metalness: 0.7,
+        emissiveIntensity: 0.1,
+        roughness: 0.8,
+        metalness: 0.04,
       }),
     [],
   );
+  // Disc — translucent gel feel via PhysicalMaterial transmission
   const discMat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#1a0a2e"),
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(DISC_GEL),
         emissive: new THREE.Color(CYBER_VIOLET),
-        emissiveIntensity: 0.8,
+        emissiveIntensity: 0.55,
         transparent: true,
         opacity: 0.85,
-        roughness: 0.2,
-        metalness: 0.3,
+        roughness: 0.25,
+        metalness: 0.0,
+        transmission: 0.35,
+        thickness: 0.4,
+        ior: 1.4,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.2,
       }),
     [],
   );
@@ -146,28 +165,22 @@ function Column({ scrollProgress }: SpineColumnProps) {
       new THREE.MeshStandardMaterial({
         color: new THREE.Color("#ffffff"),
         emissive: new THREE.Color("#ffffff"),
-        emissiveIntensity: 1.2,
+        emissiveIntensity: 1.1,
         transparent: true,
-        opacity: 0.6,
+        opacity: 0.55,
       }),
     [],
   );
 
-  // Vertebrae positions
   const vertebraYs = useMemo(
     () => Array.from({ length: VERTEBRA_COUNT }, (_, i) => START_Y - i * VERTEBRA_GAP),
     [],
   );
-  // Disc positions = midpoints between adjacent vertebrae
   const discYs = useMemo(
-    () =>
-      vertebraYs
-        .slice(0, -1)
-        .map((y, i) => (y + vertebraYs[i + 1]) / 2),
+    () => vertebraYs.slice(0, -1).map((y, i) => (y + vertebraYs[i + 1]) / 2),
     [vertebraYs],
   );
 
-  // Nerve root line points (per vertebra, both sides)
   const nerveRoots = useMemo(() => {
     return vertebraYs.flatMap((y) => [
       {
@@ -214,25 +227,21 @@ function Column({ scrollProgress }: SpineColumnProps) {
     cordMat,
   ]);
 
-  // Sway with scroll
-  const targetY = useRef(0);
-  const targetX = useRef(0);
-  targetY.current = Math.sin(scrollProgress * Math.PI) * 0.4;
-  targetX.current = scrollProgress * 0.08;
-
+  // Sway with scroll — read from ref, never trigger React render
   useFrame(() => {
     if (!groupRef.current) return;
+    const p = progressRef.current;
+    const targetY = Math.sin(p * Math.PI) * 0.4;
+    const targetX = p * 0.08;
     const g = groupRef.current;
-    g.rotation.y += (targetY.current - g.rotation.y) * 0.07;
-    g.rotation.x += (targetX.current - g.rotation.x) * 0.07;
+    g.rotation.y += (targetY - g.rotation.y) * 0.07;
+    g.rotation.x += (targetX - g.rotation.x) * 0.07;
   });
 
   return (
     <group ref={groupRef}>
-      {/* Spinal cord */}
       <mesh geometry={cordGeom} material={cordMat} />
 
-      {/* Vertebrae */}
       {vertebraYs.map((y) => (
         <Vertebra
           key={`v-${y}`}
@@ -246,12 +255,10 @@ function Column({ scrollProgress }: SpineColumnProps) {
         />
       ))}
 
-      {/* Discs */}
       {discYs.map((y) => (
         <mesh key={`d-${y}`} geometry={discGeom} material={discMat} position={[0, y, 0]} />
       ))}
 
-      {/* Nerve roots */}
       {nerveRoots.map((n) => (
         <Line
           key={n.key}
@@ -266,7 +273,7 @@ function Column({ scrollProgress }: SpineColumnProps) {
   );
 }
 
-export function SpineColumn({ scrollProgress }: SpineColumnProps) {
+export function SpineColumn({ progressRef }: SpineColumnProps) {
   return (
     <Canvas
       gl={{ alpha: true, antialias: true }}
@@ -281,45 +288,63 @@ export function SpineColumn({ scrollProgress }: SpineColumnProps) {
         background: "transparent",
       }}
     >
-      <ambientLight intensity={0.2} />
-      <pointLight color={CYBER_CYAN} position={[2, 4, 3]} intensity={6} />
-      <pointLight color={CYBER_VIOLET} position={[-2, -4, -2]} intensity={4} />
-      <pointLight color="#ffffff" position={[0, 0, 5]} intensity={2} />
-      <Column scrollProgress={scrollProgress} />
+      <ambientLight intensity={0.35} />
+      <hemisphereLight color={"#fff5d6"} groundColor={"#1a1428"} intensity={0.6} />
+      <pointLight color={CYBER_CYAN} position={[3, 5, 4]} intensity={5} />
+      <pointLight color={CYBER_VIOLET} position={[-3, -4, -2]} intensity={3.5} />
+      <pointLight color="#ffffff" position={[0, 0, 6]} intensity={1.5} />
+      <Column progressRef={progressRef} />
     </Canvas>
   );
 }
 
-/** Scroll progress (0..1) of the container relative to viewport. */
-export function useSpineScrollProgress(ref: React.RefObject<HTMLElement | null>) {
-  const [progress, setProgress] = useState(0);
+/**
+ * Returns a stable ref whose .current is updated from passive scroll listeners.
+ * NEVER triggers React re-renders — consumers should read from the ref inside
+ * useFrame / requestAnimationFrame loops only.
+ */
+export function useSpineScrollProgress(
+  ref: React.RefObject<HTMLElement | null>,
+): ScrollProgressRef {
+  const progressRef = useRef(0);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
+    let rafId = 0;
+    let queued = false;
+
     const compute = () => {
+      queued = false;
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       const total = rect.height - vh;
       if (total <= 0) {
-        setProgress(0);
+        progressRef.current = 0;
         return;
       }
       const pct = Math.min(1, Math.max(0, -rect.top / total));
-      setProgress(pct);
+      progressRef.current = pct;
+    };
+
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      rafId = requestAnimationFrame(compute);
     };
 
     compute();
-    window.addEventListener("scroll", compute, { passive: true });
-    window.addEventListener("resize", compute);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
     return () => {
-      window.removeEventListener("scroll", compute);
-      window.removeEventListener("resize", compute);
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
     };
   }, [ref]);
 
-  return progress;
+  return progressRef;
 }
 
 /** SSR-safe mobile detector at 640px breakpoint. */
