@@ -104,13 +104,13 @@ const TIMELINE = [
 ];
 
 const CTF_ACHIEVEMENTS = [
-  { event: "HackTheBox Global CTF", place: "23rd", total: "1,600+ teams", note: "Global — taken seriously" },
-  { event: "LuxorCTF — Finals", place: "7th", total: "Top 10", note: "AI prohibited category" },
-  { event: "LuxorCTF — Qualifiers", place: "10th", total: "100 teams", note: "With team DARKVIEL" },
+  { event: "CyberTalents (Solo)", place: "20th", total: "250 participants", note: "Won an eJPT exam voucher" },
+  { event: "CyberTalents (Team)", place: "4th", total: "", note: "With team DARKVIEL" },
   { event: "ZinadCTF", place: "11th", total: "100+ teams", note: "With team DARKVIEL" },
-  { event: "CyberTalents", place: "4th", total: "", note: "Team DARKVIEL" },
-  { event: "CyberTalents", place: "20th", total: "250 participants", note: "Won eJPT exam voucher" },
-  { event: "HackTheBox Platform", place: "Hacker rank", total: "", note: "Ongoing — top 200 globally" },
+  { event: "LuxorCTF — Qualifiers", place: "10th", total: "100 teams", note: "Advanced to finals" },
+  { event: "LuxorCTF — Finals", place: "7th", total: "Top 10", note: "AI was prohibited" },
+  { event: "HackTheBox Global CTF", place: "23rd", total: "1,600+ teams", note: "Global event — taken seriously" },
+  { event: "HackTheBox Platform", place: "Hacker rank", total: "", note: "Other globals — usually top 200 (not taken seriously)" },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -191,7 +191,7 @@ function ExperiencePage() {
             className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
             style={{ zIndex: 0 }}
           >
-            <SpineColumn scrollProgress={progress} />
+            <SpineColumn progressRef={progress} />
           </div>
         )}
 

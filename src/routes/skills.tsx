@@ -213,7 +213,7 @@ function SkillsPage() {
           className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
           style={{ zIndex: 0 }}
         >
-          <SpineColumn scrollProgress={progress} />
+          <SpineColumn progressRef={progress} />
         </div>
       )}
 

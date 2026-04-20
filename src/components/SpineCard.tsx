@@ -22,6 +22,8 @@ export function SpineCard({ index, children, className = "", onSettled }: SpineC
   const wrapRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const floatRef = useRef<gsap.core.Tween | null>(null);
+  const settledCbRef = useRef(onSettled);
+  settledCbRef.current = onSettled;
   const isSmall = useIsSmall();
   const even = index % 2 === 0;
 
@@ -56,7 +58,7 @@ export function SpineCard({ index, children, className = "", onSettled }: SpineC
                 duration: 3,
                 ease: "sine.inOut",
               });
-              onSettled?.();
+              settledCbRef.current?.();
             }
           },
         },
@@ -68,7 +70,7 @@ export function SpineCard({ index, children, className = "", onSettled }: SpineC
       floatRef.current = null;
       ctx.revert();
     };
-  }, [onSettled]);
+  }, []);
 
   return (
     <div ref={wrapRef} className="relative w-full">
