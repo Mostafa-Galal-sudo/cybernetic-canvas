@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
-import { HelixCard } from "@/components/HelixCard";
+import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
+import { SpineCard } from "@/components/SpineCard";
 import { ArrowUpRight, Calendar, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/writeups")({
@@ -32,26 +32,26 @@ const POSTS = [
   {
     slug: "snapchat-smtp-open-relay",
     date: "2025-05-15",
-    tags: ["bug bounty", "smtp"],
+    tags: ["bug bounty", "smtp", "email security", "reconnaissance"],
     title: "Snapchat SMTP Open Relay Vulnerability",
     excerpt:
-      "How a missing auth check on beta.snappublisher.snapchat.com let me relay arbitrary email through Snapchat's infrastructure.",
+      "During a bug bounty engagement I discovered an SMTP open relay on beta.snappublisher.snapchat.com allowing unauthenticated relay through Snapchat's infrastructure. Full PoC, recon chain, and responsible disclosure.",
   },
   {
     slug: "tryhackme-three-season-streak",
     date: "2025-09-01",
-    tags: ["tryhackme", "red team"],
+    tags: ["tryhackme", "red team", "offensive security", "achievements"],
     title: "TryHackMe Leaderboards: 1st Place Across Three Seasons",
     excerpt:
-      "Bronze, Gold, and Sapphire — what it took to top the global leaderboard three seasons in a row.",
+      "Bronze (5.2%), Gold (1.7%), Sapphire (0.8% Epic Tier) — three seasons, 1st place each. What the grind looked like and what it taught me.",
   },
   {
     slug: "journey-into-red-teaming",
     date: "2025-05-20",
-    tags: ["learning", "red team"],
+    tags: ["red teaming", "learning", "ctf", "engineering"],
     title: "My Journey into Red Teaming",
     excerpt:
-      "Balancing a Communications & Electronics Engineering degree with self-directed offensive security study.",
+      "Balancing a Communications & Electronics Engineering degree with self-directed offensive security. The challenges, the CTF placements, and what consistent practice actually looks like.",
   },
 ];
 
@@ -64,22 +64,17 @@ const tagVariants = {
 
 type Post = (typeof POSTS)[number];
 
-function WriteupCard({ post }: { post: Post }) {
-  const [swung, setSwung] = useState(false);
-
+function WriteupCard({ post, ready }: { post: Post; ready: boolean }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.3, ease: EASE }}
-      style={{ transformStyle: "preserve-3d" }}
-      onAnimationComplete={() => setSwung(true)}
+      whileHover={{ scale: 1.02, boxShadow: "0 0 50px oklch(0.85 0.18 200 / 0.4)" }}
+      transition={{ duration: 0.25, ease: EASE }}
     >
       <TiltCard intensity={6} className="group h-full rounded-2xl">
         <Link
           to="/writeups/$slug"
           params={{ slug: post.slug }}
           className="relative flex h-full flex-col overflow-hidden rounded-2xl p-6 glass-panel gradient-border corner-brackets"
-          onMouseEnter={() => setSwung(true)}
         >
           <div
             aria-hidden
@@ -88,7 +83,7 @@ function WriteupCard({ post }: { post: Post }) {
 
           <motion.div
             initial="hidden"
-            animate={swung ? "show" : "hidden"}
+            animate={ready ? "show" : "hidden"}
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }}
             className="flex flex-wrap items-center gap-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
           >
@@ -132,20 +127,19 @@ function WriteupCard({ post }: { post: Post }) {
   );
 }
 
+function WriteupSlot({ post, index }: { post: Post; index: number }) {
+  const [ready, setReady] = useState(false);
+  return (
+    <SpineCard index={index} onSettled={() => setReady(true)}>
+      <WriteupCard post={post} ready={ready} />
+    </SpineCard>
+  );
+}
+
 function WriteupsPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(containerRef);
-  const isMobile = useIsMobile();
-  const [swungIdx, setSwungIdx] = useState<Set<number>>(new Set());
-
-  const markSwung = (i: number) => {
-    setSwungIdx((s) => {
-      if (s.has(i)) return s;
-      const n = new Set(s);
-      n.add(i);
-      return n;
-    });
-  };
+  const progress = useSpineScrollProgress(containerRef);
+  const isSmall = useIsSmall();
 
   return (
     <div ref={containerRef} className="relative" style={{ minHeight: "200vh" }}>
@@ -159,37 +153,27 @@ function WriteupsPage() {
         </Reveal>
       </div>
 
-      {/* Sticky 3D helix backdrop */}
-      {!isMobile && (
+      {!isSmall && (
         <div
           aria-hidden
-          className="pointer-events-none sticky top-0 h-screen w-full"
+          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
           style={{ zIndex: 0 }}
         >
-          <HelixSpine scrollProgress={progress} />
+          <SpineColumn scrollProgress={progress} />
         </div>
       )}
 
-      {/* Content layered above the helix */}
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6"
         style={{
-          marginTop: isMobile ? 0 : "-100vh",
+          marginTop: isSmall ? 0 : "-100vh",
           zIndex: 10,
         }}
       >
-        <ul className="space-y-24 pb-32 pt-8">
+        <ul className="space-y-20 pb-32 pt-8 sm:space-y-28">
           {POSTS.map((p, i) => (
             <li key={p.slug}>
-              <HelixCard
-                index={i}
-                offset={280}
-                onSwingComplete={() => markSwung(i)}
-              >
-                <WriteupCard post={p} />
-              </HelixCard>
-              {/* swungIdx triggers re-render so children can pick up state */}
-              <span aria-hidden className="hidden">{swungIdx.has(i) ? "y" : "n"}</span>
+              <WriteupSlot post={p} index={i} />
             </li>
           ))}
         </ul>

@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
-import { HelixCard } from "@/components/HelixCard";
+import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
+import { SpineCard } from "@/components/SpineCard";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ExternalLink, Github } from "lucide-react";
+import { ExternalLink, Github, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({
@@ -36,200 +36,179 @@ export const Route = createFileRoute("/projects")({
 });
 
 type Project = {
-  id: string;
-  code: string;
-  status: "shipped" | "active" | "archived";
-  category: "security" | "technical";
-  title: string;
-  tagline: string;
+  name: string;
   description: string;
-  takeaways: string;
+  full_description: string;
+  key_takeaways: string;
   tech: string[];
-  github?: string;
-  demo?: string;
-  gradient: string;
+  category: "security" | "technical";
+  image: string | null;
+  github: string;
+  demo: string;
+  status: "completed" | "private" | "wip";
 };
 
 const PROJECTS: Project[] = [
   {
-    id: "p01",
-    code: "PROJ_01",
-    status: "shipped",
-    category: "security",
-    title: "Shadow Core Framework",
-    tagline: "Modular core framework for staged payload delivery and listener orchestration.",
-    description:
-      "Shadow Core is a custom-built framework designed to manage configuration, staged delivery, and controlled execution flows. It serves as the backbone for multiple experimental security modules.",
-    takeaways:
-      "Designed a modular infrastructure framework demonstrating strong understanding of staged execution and configuration-driven behavior.",
+    name: "Smart Recon Vehicle",
+    description: "A smart vehicle combining embedded systems, automation, and remote Bluetooth control.",
+    full_description:
+      "Smart Recon Vehicle is an embedded systems project building a remotely controlled and semi-autonomous vehicle integrating a motor driver, multiple motors, Bluetooth control via HC-05, and laptop-side monitoring.",
+    key_takeaways:
+      "Designed modular embedded control system; hands-on with motor drivers, Bluetooth communication, and automation logic.",
+    tech: ["Embedded C/C++", "Motor Driver", "HC-05 Bluetooth", "Serial Communication"],
+    category: "technical",
+    image: "/assets/smart.jpeg",
+    github: "https://github.com/youssefsalama-11/Smart-Car-Project/blob/main/Smart_Car.ino",
+    demo: "",
+    status: "completed",
+  },
+  {
+    name: "Shadow Core Framework",
+    description: "Modular core framework for staged payload delivery and controlled listener orchestration.",
+    full_description:
+      "Shadow Core manages configuration, staged delivery, and controlled execution flows. Backbone for multiple experimental security modules.",
+    key_takeaways:
+      "Designed modular infrastructure framework demonstrating staged execution and configuration-driven behavior.",
     tech: ["Python", "Bash", "JSON", "Linux", "Deployment Scripts"],
-    gradient:
-      "linear-gradient(135deg, oklch(0.85 0.18 200 / 0.4), oklch(0.65 0.25 290 / 0.4))",
-  },
-  {
-    id: "p02",
-    code: "PROJ_02",
-    status: "shipped",
     category: "security",
-    title: "Payload Research Toolkit",
-    tagline: "Multi-platform payload research toolkit for delivery & obfuscation studies.",
-    description:
-      "Researches how different payload formats behave across operating systems. Includes payload generation, lightweight obfuscation, delivery simulation, and listener-side handling for controlled lab environments.",
-    takeaways:
-      "Gained deep insight into payload lifecycle analysis, cross-platform behavior, and delivery-chain modeling.",
-    tech: ["Python", "JavaScript", "Bash", "Linux", "Obfuscation"],
-    gradient:
-      "linear-gradient(135deg, oklch(0.7 0.27 330 / 0.4), oklch(0.85 0.18 200 / 0.4))",
+    image: null,
+    github: "",
+    demo: "",
+    status: "private",
   },
   {
-    id: "p03",
-    code: "PROJ_03",
-    status: "shipped",
+    name: "Payload Research Toolkit",
+    description: "Multi-platform payload research toolkit for studying delivery mechanisms and obfuscation.",
+    full_description:
+      "Researches payload formats across OSes — generation, lightweight obfuscation, delivery simulation, and listener-side handling for controlled lab environments.",
+    key_takeaways:
+      "Deep insight into payload lifecycle analysis, cross-platform behavior, and delivery-chain modeling.",
+    tech: ["Python", "JavaScript", "Bash", "Linux", "Obfuscation Techniques"],
     category: "security",
-    title: "NM Analyzer",
-    tagline: "Static analysis tool for Linux Kernel Modules using symbol-table heuristics.",
-    description:
-      "NM Analyzer automates the inspection of ELF binaries by parsing symbol tables. It uses semantic heuristics to categorize symbols into risk groups such as Syscall Hooking and Privilege Escalation.",
-    takeaways:
-      "Built a security-focused binary analysis tool; implemented heuristic-based detection for kernel-level threats; mastered ELF symbol-table analysis.",
-    tech: ["Python", "ELF Analysis", "Linux Kernel", "Heuristics"],
-    demo: "assets/nm.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.65 0.25 290 / 0.4), oklch(0.7 0.27 330 / 0.4))",
+    image: null,
+    github: "",
+    demo: "",
+    status: "private",
   },
   {
-    id: "p04",
-    code: "PROJ_04",
-    status: "shipped",
+    name: "Endpoint Telemetry Logger",
+    description: "Client-server telemetry tool for capturing and analyzing user input patterns in controlled environments.",
+    full_description:
+      "Explores endpoint-level telemetry by hiding inside a game and transmitting structured logs to a central server for analysis.",
+    key_takeaways:
+      "Built client-server telemetry system demonstrating endpoint monitoring and data transport.",
+    tech: ["Python", "Sockets", "File I/O", "Client-Server Architecture"],
     category: "security",
-    title: "Endpoint Telemetry Logger",
-    tagline: "Client-server telemetry tool for capturing input patterns in lab environments.",
-    description:
-      "Explores endpoint-level telemetry collection by hiding inside a game (any game) and transmitting structured logs to a central server for analysis.",
-    takeaways:
-      "Developed a client-server telemetry system, demonstrating understanding of endpoint monitoring and data transport.",
-    tech: ["Python", "Sockets", "File I/O", "Client-Server"],
-    gradient:
-      "linear-gradient(135deg, oklch(0.75 0.18 160 / 0.4), oklch(0.85 0.18 200 / 0.4))",
+    image: "/assets/keylogg.png",
+    github: "",
+    demo: "",
+    status: "completed",
   },
   {
-    id: "p05",
-    code: "PROJ_05",
-    status: "shipped",
+    name: "FaceBlur Live",
+    description: "Real-time computer vision app detecting and blurring faces in live video streams.",
+    full_description:
+      "Detects human faces from live camera feed and applies dynamic blurring to protect identity in real time.",
+    key_takeaways:
+      "Built real-time computer vision system showcasing video streams and detection pipelines.",
+    tech: ["Python", "OpenCV", "Computer Vision", "Real-Time Processing"],
     category: "security",
-    title: "FaceBlur Live",
-    tagline: "Real-time computer vision app that detects and blurs faces in live video.",
-    description:
-      "FaceBlur Live is a real-time video processing application that detects human faces from a live camera feed and applies dynamic blurring to protect identity.",
-    takeaways:
-      "Built a real-time computer vision system, showcasing strong understanding of video streams and detection pipelines.",
-    tech: ["Python", "OpenCV", "Computer Vision", "Real-Time"],
-    demo: "assets/livefaceblur.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.78 0.18 80 / 0.4), oklch(0.7 0.27 330 / 0.4))",
+    image: "/assets/livefaceblur.png",
+    github: "",
+    demo: "/assets/livefaceblur.mp4",
+    status: "completed",
   },
   {
-    id: "p06",
-    code: "PROJ_06",
-    status: "shipped",
+    name: "TCP Full Scan Tool",
+    description: "Custom TCP-based network scanning tool for analyzing exposed services and port states.",
+    full_description:
+      "Implements TCP full-connect scanning to enumerate open, closed, and filtered ports emphasizing low-level networking.",
+    key_takeaways:
+      "Demonstrated networking fundamentals by implementing a custom TCP scanning engine.",
+    tech: ["Python", "TCP Sockets", "Networking Fundamentals"],
     category: "security",
-    title: "TCP Full Scan Tool",
-    tagline: "Custom TCP-based network scanner for analyzing services and port states.",
-    description:
-      "Implements a TCP full-connect scanning approach to enumerate open, closed, and filtered ports. Emphasizes low-level networking concepts.",
-    takeaways:
-      "Demonstrated strong networking fundamentals by implementing a custom TCP scanning engine.",
-    tech: ["Python", "TCP Sockets", "Networking"],
-    demo: "assets/tcp_full_scan.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.65 0.25 290 / 0.4), oklch(0.75 0.18 160 / 0.4))",
+    image: "/assets/tcp_full_scan.png",
+    github: "",
+    demo: "/assets/tcp_full_scan.mp4",
+    status: "completed",
   },
   {
-    id: "p07",
-    code: "PROJ_07",
-    status: "shipped",
+    name: "Series RLC Band-Pass Filter",
+    description: "Passive band-pass filter using series RLC circuit for precise frequency selection.",
+    full_description:
+      "Allows signals around a defined center frequency to pass while attenuating low/high frequencies. Emphasizes resonance, bandwidth, and frequency response analysis.",
+    key_takeaways:
+      "Deep understanding of resonance, center frequency, bandwidth, quality factor, and passive filter design.",
+    tech: ["RLC Circuits", "Analog Electronics", "Filters", "Frequency Response"],
     category: "technical",
-    title: "Smart Recon Vehicle",
-    tagline: "Embedded systems vehicle combining automation and remote control.",
-    description:
-      "An embedded systems project focused on building a remotely controlled and semi-autonomous vehicle. Integrates a motor driver with multiple motors, Bluetooth-based remote control via HC-05, and laptop-side monitoring.",
-    takeaways:
-      "Designed and implemented a modular embedded control system; gained hands-on experience with motor drivers, Bluetooth communication, and automation logic.",
-    tech: ["Embedded C/C++", "Motor Driver", "HC-05", "Serial Comm"],
-    github:
-      "https://github.com/youssefsalama-11/Smart-Car-Project/blob/main/Smart_Car.ino",
-    gradient:
-      "linear-gradient(135deg, oklch(0.85 0.18 200 / 0.4), oklch(0.78 0.18 80 / 0.4))",
+    image: "/assets/bandpass.png",
+    github: "",
+    demo: "/assets/bandpass.mp4",
+    status: "completed",
   },
   {
-    id: "p08",
-    code: "PROJ_08",
-    status: "shipped",
+    name: "Smart Curtain System",
+    description: "Logic-gate-based smart curtain control system for automated opening and closing.",
+    full_description:
+      "Controls curtain movement based on logical conditions using pure logic gates — no microcontrollers — simulating smart home automation at hardware level.",
+    key_takeaways:
+      "Applied digital logic to automation; designed control logic using gates; hardware-level decision-making.",
+    tech: ["Logic Gates", "Digital Logic Design", "Automation Fundamentals"],
     category: "technical",
-    title: "3rd Order Butterworth Band-Pass Filter",
-    tagline: "Passive 3rd-order Butterworth BPF with flat passband and precise selection.",
-    description:
-      "Design and implementation of a passive 3rd-order Butterworth band-pass filter using only RLC components. Maximally flat magnitude response within the passband; targets a 1 MHz center frequency with a 10 kHz bandwidth.",
-    takeaways:
-      "Mastered Butterworth characteristics, filter order trade-offs, passive RLC design, and transfer-function analysis.",
-    tech: ["Analog Filters", "Butterworth", "RLC", "Simulation"],
-    demo: "assets/filter3rd.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.75 0.18 160 / 0.4), oklch(0.65 0.25 290 / 0.4))",
+    image: "/assets/curtain.png",
+    github: "",
+    demo: "",
+    status: "completed",
   },
   {
-    id: "p09",
-    code: "PROJ_09",
-    status: "shipped",
-    category: "technical",
-    title: "Series RLC Band-Pass Filter",
-    tagline: "Passive band-pass filter using a series RLC circuit for frequency selection.",
-    description:
-      "Analog electronics project demonstrating frequency selection using passive components. Allows signals around a defined center frequency to pass while attenuating low and high frequencies.",
-    takeaways:
-      "Strong understanding of resonance, center frequency, bandwidth, and quality factor; hands-on RLC circuits and frequency-domain analysis.",
-    tech: ["RLC Circuits", "Analog", "Filters", "Frequency Response"],
-    demo: "assets/bandpass.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.7 0.27 330 / 0.4), oklch(0.78 0.18 80 / 0.4))",
+    name: "NM Analyzer",
+    description: "Static analysis tool for Linux Kernel Modules using symbol table heuristics to detect malicious patterns.",
+    full_description:
+      "Automates ELF binary inspection by parsing symbol tables. Uses semantic heuristics to categorize symbols into risk groups: Syscall Hooking, Privilege Escalation.",
+    key_takeaways:
+      "Built security-focused binary analysis tool; heuristic-based kernel-level threat detection; ELF symbol table mastery.",
+    tech: ["Python", "ELF Analysis", "Linux Kernel Internals", "Heuristic Analysis"],
+    category: "security",
+    image: "/assets/nm_analyzer.png",
+    github: "",
+    demo: "/assets/nm.mp4",
+    status: "completed",
   },
   {
-    id: "p10",
-    code: "PROJ_10",
-    status: "shipped",
-    category: "technical",
-    title: "Smart Curtain System",
-    tagline: "Logic-gate-based smart curtain control for automated open/close.",
-    description:
-      "A digital logic project that controls curtain movement based on logical conditions such as light availability or user input. Pure logic-gate design — no microcontrollers — showcasing the fundamentals behind smart-home automation.",
-    takeaways:
-      "Applied digital logic to automation; improved skills in designing decision-making systems at the hardware level.",
-    tech: ["Logic Gates", "Digital Logic", "Automation"],
-    gradient:
-      "linear-gradient(135deg, oklch(0.85 0.18 200 / 0.4), oklch(0.7 0.27 330 / 0.4))",
-  },
-  {
-    id: "p11",
-    code: "PROJ_11",
-    status: "shipped",
-    category: "technical",
-    title: "TikTok Media Downloader",
-    tagline: "Lightweight tool for downloading TikTok videos without watermarks or ads.",
-    description:
-      "A clean and minimal media downloader that retrieves TikTok videos without embedded watermarks or advertisements.",
-    takeaways:
-      "Built a clean media extraction tool, demonstrating proficiency in HTTP workflows and content parsing.",
+    name: "TikTok Media Downloader",
+    description: "Lightweight tool for downloading TikTok videos without watermarks or ads.",
+    full_description:
+      "Clean minimal media downloader retrieving TikTok videos without embedded watermarks or ads.",
+    key_takeaways:
+      "Media extraction tool demonstrating HTTP workflows and content parsing.",
     tech: ["Python", "HTTP Requests", "Media Parsing"],
-    demo: "assets/tiktok.mp4",
-    gradient:
-      "linear-gradient(135deg, oklch(0.78 0.18 80 / 0.4), oklch(0.85 0.18 200 / 0.4))",
+    category: "technical",
+    image: "/assets/tiktok.png",
+    github: "",
+    demo: "/assets/tiktok.mp4",
+    status: "completed",
+  },
+  {
+    name: "3rd Order Butterworth Band-Pass Filter",
+    description: "Passive 3rd-order Butterworth BPF with flat passband and precise frequency selection.",
+    full_description:
+      "Maximally flat magnitude response within the passband. Center frequency 1 MHz, bandwidth 10 kHz. Third-order design balances passband flatness with roll-off steepness.",
+    key_takeaways:
+      "Butterworth filter characteristics, filter order trade-offs, passive RLC design, transfer function analysis.",
+    tech: ["Analog Filters", "Butterworth Design", "RLC Circuits", "Frequency Response", "Circuit Simulation"],
+    category: "technical",
+    image: "/assets/butterworth_bpf.jpeg",
+    github: "",
+    demo: "/assets/filter3rd.mp4",
+    status: "completed",
   },
 ];
 
 const STATUS_COLOR: Record<Project["status"], string> = {
-  active: "bg-cyber-cyan",
-  shipped: "bg-emerald-400",
-  archived: "bg-muted-foreground",
+  completed: "bg-cyber-cyan",
+  private: "bg-cyber-violet",
+  wip: "bg-amber-400",
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -242,38 +221,57 @@ const tagVariants = {
 function ProjectCard({
   project,
   onOpen,
-  swung,
+  ready,
 }: {
   project: Project;
   onOpen: () => void;
-  swung: boolean;
+  ready: boolean;
 }) {
+  const isPrivate = project.status === "private";
+
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.3, ease: EASE }}
-      style={{ transformStyle: "preserve-3d" }}
+      whileHover={{ scale: 1.02, boxShadow: "0 0 40px oklch(0.85 0.18 200 / 0.4)" }}
+      transition={{ duration: 0.25, ease: EASE }}
     >
-      <TiltCard className="group h-full">
+      <TiltCard className="group h-full" intensity={6}>
         <button
           onClick={onOpen}
-          className="relative block h-full w-full overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets transition-shadow hover:shadow-[0_0_40px_oklch(0.85_0.18_200/0.4)]"
+          className="relative block h-full w-full overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets"
         >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full z-10"
           />
-          <div
-            aria-hidden
-            className="aspect-[16/10] w-full"
-            style={{ background: project.gradient }}
-          >
-            <div className="grid h-full place-items-center">
-              <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/70">
-                {project.code}
-              </span>
+          {project.image ? (
+            <div className="aspect-[16/10] w-full overflow-hidden bg-black/40">
+              <img
+                src={project.image}
+                alt={project.name}
+                loading="lazy"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
             </div>
-          </div>
+          ) : (
+            <div
+              aria-hidden
+              className="aspect-[16/10] w-full"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.65 0.25 290 / 0.5), oklch(0.7 0.27 330 / 0.5))",
+              }}
+            >
+              <div className="flex h-full flex-col items-center justify-center gap-3">
+                <Lock className="h-10 w-10 text-cyber-violet" />
+                <span className="font-mono text-xs uppercase tracking-[0.4em] text-foreground/80">
+                  Classified
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Sorry — can not show
+                </span>
+              </div>
+            </div>
+          )}
           <div className="p-5">
             <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               <span>{project.category}</span>
@@ -285,17 +283,17 @@ function ProjectCard({
               </span>
             </div>
             <h3 className="mt-3 font-display text-xl font-semibold leading-snug">
-              {project.title}
+              {project.name}
             </h3>
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-              {project.tagline}
+              {project.description}
             </p>
             <motion.div
               initial="hidden"
-              animate={swung ? "show" : "hidden"}
+              animate={ready ? "show" : "hidden"}
               variants={{
                 hidden: {},
-                show: { transition: { staggerChildren: 0.05, delayChildren: 0.1 } },
+                show: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
               }}
               className="mt-4 flex flex-wrap gap-1.5"
             >
@@ -317,6 +315,11 @@ function ProjectCard({
                 </motion.span>
               )}
             </motion.div>
+            {isPrivate && (
+              <div className="mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-cyber-violet">
+                <Lock className="h-3 w-3" /> source not public
+              </div>
+            )}
           </div>
         </button>
       </TiltCard>
@@ -333,11 +336,11 @@ function ProjectSlot({
   index: number;
   onOpen: () => void;
 }) {
-  const [swung, setSwung] = useState(false);
+  const [ready, setReady] = useState(false);
   return (
-    <HelixCard index={index} offset={320} onSwingComplete={() => setSwung(true)}>
-      <ProjectCard project={project} onOpen={onOpen} swung={swung} />
-    </HelixCard>
+    <SpineCard index={index} onSettled={() => setReady(true)}>
+      <ProjectCard project={project} onOpen={onOpen} ready={ready} />
+    </SpineCard>
   );
 }
 
@@ -345,13 +348,13 @@ function ProjectsPage() {
   const [open, setOpen] = useState<Project | null>(null);
   const [filter, setFilter] = useState<"all" | "security" | "technical">("all");
   const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(containerRef);
-  const isMobile = useIsMobile();
+  const progress = useSpineScrollProgress(containerRef);
+  const isSmall = useIsSmall();
 
   const filtered = PROJECTS.filter((p) => filter === "all" || p.category === filter);
 
   return (
-    <div ref={containerRef} className="relative" style={{ minHeight: "400vh" }}>
+    <div ref={containerRef} className="relative" style={{ minHeight: "420vh" }}>
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <Reveal>
           <SectionHeading
@@ -378,20 +381,20 @@ function ProjectsPage() {
         </div>
       </div>
 
-      {!isMobile && (
+      {!isSmall && (
         <div
           aria-hidden
-          className="pointer-events-none sticky top-0 h-screen w-full"
+          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
           style={{ zIndex: 0 }}
         >
-          <HelixSpine scrollProgress={progress} />
+          <SpineColumn scrollProgress={progress} />
         </div>
       )}
 
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6"
         style={{
-          marginTop: isMobile ? 0 : "-100vh",
+          marginTop: isSmall ? 0 : "-100vh",
           zIndex: 10,
         }}
       >
@@ -402,10 +405,10 @@ function ProjectsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="space-y-20 pb-32 pt-8"
+            className="space-y-16 pb-32 pt-8 sm:space-y-24"
           >
             {filtered.map((p, i) => (
-              <li key={p.id}>
+              <li key={p.name}>
                 <ProjectSlot project={p} index={i} onOpen={() => setOpen(p)} />
               </li>
             ))}
@@ -419,9 +422,7 @@ function ProjectsPage() {
             <>
               <DialogHeader>
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-cyber-cyan">
-                  <span>
-                    {open.code} · {open.category}
-                  </span>
+                  <span>{open.category}</span>
                   <span className="flex items-center gap-1.5">
                     <span
                       className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[open.status]}`}
@@ -430,31 +431,45 @@ function ProjectsPage() {
                   </span>
                 </div>
                 <DialogTitle className="mt-2 font-display text-3xl">
-                  {open.title}
+                  {open.name}
                 </DialogTitle>
                 <DialogDescription className="text-base text-muted-foreground">
-                  {open.tagline}
+                  {open.description}
                 </DialogDescription>
               </DialogHeader>
-              <div
-                aria-hidden
-                className="mt-2 aspect-[16/9] w-full overflow-hidden rounded-xl"
-                style={{ background: open.gradient }}
-              >
-                <div className="grid h-full place-items-center">
-                  <span className="font-mono text-xs uppercase tracking-[0.4em] text-foreground/70">
-                    {open.code}
-                  </span>
+              {open.image ? (
+                <div className="mt-2 aspect-[16/9] w-full overflow-hidden rounded-xl bg-black/40">
+                  <img
+                    src={open.image}
+                    alt={open.name}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
-              </div>
+              ) : (
+                <div
+                  aria-hidden
+                  className="mt-2 aspect-[16/9] w-full overflow-hidden rounded-xl"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.65 0.25 290 / 0.5), oklch(0.7 0.27 330 / 0.5))",
+                  }}
+                >
+                  <div className="flex h-full flex-col items-center justify-center gap-2">
+                    <Lock className="h-8 w-8 text-cyber-violet" />
+                    <span className="font-mono text-xs uppercase tracking-[0.4em] text-foreground/80">
+                      Classified
+                    </span>
+                  </div>
+                </div>
+              )}
               <p className="text-sm leading-relaxed text-foreground/80">
-                {open.description}
+                {open.full_description}
               </p>
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
                   key takeaways
                 </div>
-                <p className="mt-2 text-sm text-foreground/80">{open.takeaways}</p>
+                <p className="mt-2 text-sm text-foreground/80">{open.key_takeaways}</p>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {open.tech.map((t) => (
@@ -466,7 +481,7 @@ function ProjectsPage() {
                   </span>
                 ))}
               </div>
-              {(open.github || open.demo) && (
+              {open.status !== "private" && (open.github || open.demo) && (
                 <div className="flex flex-wrap gap-2 pt-2">
                   {open.demo && (
                     <a
