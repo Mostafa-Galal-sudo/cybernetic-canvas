@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
-import { HelixCard } from "@/components/HelixCard";
+import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
+import { SpineCard } from "@/components/SpineCard";
 import { Check, Sword, ShieldCheck, BrainCircuit, ArrowRight } from "lucide-react";
 import { gsap } from "gsap";
 import { cn } from "@/lib/utils";
@@ -85,7 +85,7 @@ const bulletVariants = {
 
 type Tier = (typeof TIERS)[number];
 
-function ServiceCard({ tier, bulletsReady }: { tier: Tier; bulletsReady: boolean }) {
+function ServiceCard({ tier, ready }: { tier: Tier; ready: boolean }) {
   const iconRef = useRef<HTMLDivElement>(null);
 
   const wobble = () => {
@@ -100,19 +100,18 @@ function ServiceCard({ tier, bulletsReady }: { tier: Tier; bulletsReady: boolean
 
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.3, ease: EASE }}
-      style={{ transformStyle: "preserve-3d" }}
+      whileHover={{ scale: 1.02, boxShadow: "0 0 60px oklch(0.85 0.18 200 / 0.4)" }}
+      transition={{ duration: 0.25, ease: EASE }}
     >
       <TiltCard
-        intensity={tier.highlight ? 5 : 8}
+        intensity={tier.highlight ? 5 : 7}
         className={cn(
           "group relative flex h-full flex-col overflow-hidden rounded-2xl p-7 glass-panel gradient-border corner-brackets",
           tier.highlight && "shadow-[0_0_60px_oklch(0.85_0.18_200/0.32)]",
         )}
       >
         {tier.highlight && (
-          <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-background">
+          <div className="absolute right-4 top-4 z-10 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-background">
             most asked
           </div>
         )}
@@ -120,10 +119,10 @@ function ServiceCard({ tier, bulletsReady }: { tier: Tier; bulletsReady: boolean
         {tier.highlight && (
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-40"
+            className="pointer-events-none absolute inset-0 rounded-2xl opacity-50"
             style={{
               background:
-                "radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.85 0.18 200 / 0.22), transparent 70%)",
+                "radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.85 0.18 200 / 0.28), transparent 70%)",
             }}
           />
         )}
@@ -148,7 +147,7 @@ function ServiceCard({ tier, bulletsReady }: { tier: Tier; bulletsReady: boolean
               custom={i}
               variants={bulletVariants}
               initial="hidden"
-              animate={bulletsReady ? "show" : "hidden"}
+              animate={ready ? "show" : "hidden"}
               className="flex items-start gap-2 text-sm text-foreground/85"
             >
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyber-cyan" />
@@ -187,19 +186,19 @@ function ServiceCard({ tier, bulletsReady }: { tier: Tier; bulletsReady: boolean
 function ServiceSlot({ tier, index }: { tier: Tier; index: number }) {
   const [ready, setReady] = useState(false);
   return (
-    <HelixCard index={index} offset={300} onSwingComplete={() => setReady(true)}>
-      <ServiceCard tier={tier} bulletsReady={ready} />
-    </HelixCard>
+    <SpineCard index={index} onSettled={() => setReady(true)}>
+      <ServiceCard tier={tier} ready={ready} />
+    </SpineCard>
   );
 }
 
 function ServicesPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(containerRef);
-  const isMobile = useIsMobile();
+  const progress = useSpineScrollProgress(containerRef);
+  const isSmall = useIsSmall();
 
   return (
-    <div ref={containerRef} className="relative" style={{ minHeight: "200vh" }}>
+    <div ref={containerRef} className="relative" style={{ minHeight: "220vh" }}>
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <Reveal>
           <SectionHeading
@@ -210,24 +209,24 @@ function ServicesPage() {
         </Reveal>
       </div>
 
-      {!isMobile && (
+      {!isSmall && (
         <div
           aria-hidden
-          className="pointer-events-none sticky top-0 h-screen w-full"
+          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
           style={{ zIndex: 0 }}
         >
-          <HelixSpine scrollProgress={progress} />
+          <SpineColumn scrollProgress={progress} />
         </div>
       )}
 
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6"
         style={{
-          marginTop: isMobile ? 0 : "-100vh",
+          marginTop: isSmall ? 0 : "-100vh",
           zIndex: 10,
         }}
       >
-        <ul className="space-y-24 pb-20 pt-8">
+        <ul className="space-y-20 pb-20 pt-8 sm:space-y-28">
           {TIERS.map((t, i) => (
             <li key={t.name}>
               <ServiceSlot tier={t} index={i} />

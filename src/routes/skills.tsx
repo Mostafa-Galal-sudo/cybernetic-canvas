@@ -4,8 +4,8 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { HelixSpine, useScrollProgress, useIsMobile } from "@/components/HelixSpine";
-import { HelixCard } from "@/components/HelixCard";
+import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
+import { SpineCard } from "@/components/SpineCard";
 import { Sword, ShieldCheck, Code2, Wrench, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -108,14 +108,14 @@ function AnimatedBar({ level }: { level: number }) {
         style={{ width: `${level}%` }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: inView ? 1 : 0 }}
-        transition={{ duration: 1.5, ease: EASE }}
+        transition={{ duration: 1.4, ease: EASE }}
       />
       <motion.div
         className="absolute inset-y-0 left-0 origin-left rounded-full bg-gradient-to-r from-cyber-cyan/60 to-cyber-violet/60 blur-[4px]"
         style={{ width: `${level}%` }}
         initial={{ scaleX: 0 }}
         animate={{ scaleX: inView ? 1 : 0 }}
-        transition={{ duration: 1.5, ease: EASE, delay: 0.08 }}
+        transition={{ duration: 1.4, ease: EASE, delay: 0.08 }}
       />
     </div>
   );
@@ -124,17 +124,16 @@ function AnimatedBar({ level }: { level: number }) {
 function SkillCard({ skill }: { skill: Skill }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
-      transition={{ duration: 0.3, ease: EASE }}
-      style={{ transformStyle: "preserve-3d" }}
+      whileHover={{ scale: 1.02, boxShadow: "0 0 36px oklch(0.85 0.18 200 / 0.35)" }}
+      transition={{ duration: 0.25, ease: EASE }}
     >
       <TiltCard
-        intensity={7}
+        intensity={6}
         className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
       >
         <div className="p-6">
           <div className="flex items-baseline justify-between">
-            <h3 className="font-display text-xl font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
+            <h3 className="font-display text-lg font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
               {skill.name}
             </h3>
             <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
@@ -157,11 +156,11 @@ function SkillsPage() {
   const [active, setActive] = useState<string>(CATEGORIES[0].key);
   const cat = CATEGORIES.find((c) => c.key === active)!;
   const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useScrollProgress(containerRef);
-  const isMobile = useIsMobile();
+  const progress = useSpineScrollProgress(containerRef);
+  const isSmall = useIsSmall();
 
   return (
-    <div ref={containerRef} className="relative" style={{ minHeight: "250vh" }}>
+    <div ref={containerRef} className="relative" style={{ minHeight: "260vh" }}>
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
         <Reveal>
           <SectionHeading
@@ -208,20 +207,20 @@ function SkillsPage() {
         </div>
       </div>
 
-      {!isMobile && (
+      {!isSmall && (
         <div
           aria-hidden
-          className="pointer-events-none sticky top-0 h-screen w-full"
+          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
           style={{ zIndex: 0 }}
         >
-          <HelixSpine scrollProgress={progress} />
+          <SpineColumn scrollProgress={progress} />
         </div>
       )}
 
       <div
         className="relative mx-auto max-w-7xl px-4 sm:px-6"
         style={{
-          marginTop: isMobile ? 0 : "-100vh",
+          marginTop: isSmall ? 0 : "-100vh",
           zIndex: 10,
         }}
       >
@@ -232,13 +231,13 @@ function SkillsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: EASE }}
-            className="space-y-20 pb-32 pt-8"
+            className="space-y-16 pb-32 pt-8 sm:space-y-20"
           >
             {cat.skills.map((s, i) => (
               <li key={s.name}>
-                <HelixCard index={i} offset={280}>
+                <SpineCard index={i}>
                   <SkillCard skill={s} />
-                </HelixCard>
+                </SpineCard>
               </li>
             ))}
           </motion.ul>
