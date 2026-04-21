@@ -53,6 +53,70 @@ const POSTS = [
     excerpt:
       "Balancing a Communications & Electronics Engineering degree with self-directed offensive security. The challenges, the CTF placements, and what consistent practice actually looks like.",
   },
+  {
+    slug: "chainbreaker-re",
+    date: "2025-10-20",
+    tags: ["reverse engineering", "ghidra", "ctf", "crackme"],
+    title: "Chainbreaker (RE) — Iterative State Cracking",
+    excerpt:
+      "A C++ crackme that demands a seed which loops back to itself after N iterations of a custom transform. Ghidra renaming, equation analysis, and a Python brute-force solver.",
+  },
+  {
+    slug: "crowdsecurity-auth",
+    date: "2025-10-12",
+    tags: ["reverse engineering", "radare2", "ghidra", "algebra"],
+    title: "CrowdSecurity Auth — Algebraic Reversal",
+    excerpt:
+      "An ELF auth binary verifying a 13-character password via per-character math. Reversed the equation to compute the password directly without bruteforce.",
+  },
+  {
+    slug: "jack-of-all-trades",
+    date: "2025-09-22",
+    tags: ["ctf", "tryhackme", "stego", "ssh", "suid"],
+    title: "Jack-of-All-Trades — Ports, Stego, and SUID Strings",
+    excerpt:
+      "Swapped HTTP/SSH ports, base64 + ROT13 + base32 chains, steghide on the right image, hydra over SSH on port 80, and a SUID strings binary for the root flag.",
+  },
+  {
+    slug: "cybertalents-practice-bash",
+    date: "2025-10-17",
+    tags: ["ctf", "cybertalents", "bash", "stego", "zip cracking"],
+    title: "CyberTalents — Practice Bash Walkthrough",
+    excerpt:
+      "Nested zip archives, john/hashcat/fcrackzip detours, ELF strings revealing 'passforasciiii', and a chain of base64-decoded passwords down to the final flag.",
+  },
+  {
+    slug: "mr-robot-ctf",
+    date: "2025-08-14",
+    tags: ["ctf", "tryhackme", "wordpress", "wpscan", "privesc"],
+    title: "Mr Robot CTF — WordPress to Root via SUID nmap",
+    excerpt:
+      "Three keys across a Mr Robot themed box: WPScan brute-force on Elliot, PHP reverse shell via theme editor, MD5 crack for user 'robot', then SUID nmap → root.",
+  },
+  {
+    slug: "tryhackme-tomcat-ghostcat",
+    date: "2025-08-29",
+    tags: ["ctf", "tryhackme", "ghostcat", "cve-2020-1938", "gpg"],
+    title: "TryHackMe Tomcat — Ghostcat (CVE-2020-1938)",
+    excerpt:
+      "AJP file read on port 8009 leaks SSH creds from web.xml. PGP-decrypt user creds with a cracked passphrase, then escalate via sudo zip / cron ufw.sh.",
+  },
+  {
+    slug: "0xl0ccedc0de-revenge",
+    date: "2025-11-02",
+    tags: ["binary exploitation", "format string", "rop", "ret2func", "ctf"],
+    title: "0xL0CCEDC0DE'S REVENGE — Multi-Stage Pwn",
+    excerpt:
+      "Format-string %hhn flip, integer boundary trap, heap overflow into a strdup'd password, then a 18-byte gets() overflow chained with ret2func across solver0 → solver1.",
+  },
+  {
+    slug: "ascii-crackme",
+    date: "2025-09-30",
+    tags: ["reverse engineering", "ghidra", "crackme", "ctf"],
+    title: "ascii — Position-Shift Crackme",
+    excerpt:
+      "A crackme where each input character is shifted by (6 - i) before comparison against a hidden encoded_flag in .bss. Reversed the per-index shift to recover the flag.",
+  },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
