@@ -1,11 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { TiltCard } from "@/components/TiltCard";
-import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
-import { SpineCard } from "@/components/SpineCard";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExternalLink, Github, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/projects")({
   head: () => ({
@@ -213,113 +211,95 @@ const STATUS_COLOR: Record<Project["status"], string> = {
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const tagVariants = {
-  hidden: { opacity: 0, y: 6 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE } },
-};
+// Bento sizing pattern — varied widths/heights for asymmetric mosaic
+const BENTO_SPANS = [
+  "sm:col-span-2 sm:row-span-2", // 0 large
+  "sm:col-span-1 sm:row-span-1", // 1
+  "sm:col-span-1 sm:row-span-2", // 2 tall
+  "sm:col-span-2 sm:row-span-1", // 3 wide
+  "sm:col-span-1 sm:row-span-1", // 4
+  "sm:col-span-1 sm:row-span-1", // 5
+  "sm:col-span-2 sm:row-span-1", // 6 wide
+  "sm:col-span-1 sm:row-span-1", // 7
+  "sm:col-span-1 sm:row-span-2", // 8 tall
+  "sm:col-span-1 sm:row-span-1", // 9
+  "sm:col-span-1 sm:row-span-1", // 10
+  "sm:col-span-2 sm:row-span-1", // 11 wide
+];
 
-function ProjectCard({
-  project,
-  onOpen,
-  ready,
-}: {
-  project: Project;
-  onOpen: () => void;
-  ready: boolean;
-}) {
+function ProjectTile({ project, span, onOpen }: { project: Project; span: string; onOpen: () => void }) {
   const isPrivate = project.status === "private";
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02, boxShadow: "0 0 40px oklch(0.85 0.18 200 / 0.4)" }}
-      transition={{ duration: 0.25, ease: EASE }}
+      layout
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.35, ease: EASE }}
+      whileHover={{ scale: 1.015, boxShadow: "0 0 50px oklch(0.85 0.18 200 / 0.35)" }}
+      className={cn("group relative", span)}
     >
-      <TiltCard className="group h-full" intensity={6}>
+      <TiltCard intensity={5} className="h-full min-h-[220px]">
         <button
           onClick={onOpen}
-          className="relative block h-full w-full overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets"
+          className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl text-left glass-panel gradient-border corner-brackets"
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full z-10"
+            className="pointer-events-none absolute inset-0 z-10 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
           />
           {project.image ? (
-            <div className="aspect-[16/10] w-full overflow-hidden bg-black/40">
+            <div className="relative h-40 w-full flex-shrink-0 overflow-hidden bg-black/40 sm:h-1/2">
               <img
                 src={project.image}
                 alt={project.name}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
             </div>
           ) : (
             <div
               aria-hidden
-              className="aspect-[16/10] w-full"
+              className="relative h-40 w-full flex-shrink-0 sm:h-1/2"
               style={{
                 background:
                   "linear-gradient(135deg, oklch(0.65 0.25 290 / 0.5), oklch(0.7 0.27 330 / 0.5))",
               }}
             >
-              <div className="flex h-full flex-col items-center justify-center gap-3">
-                <Lock className="h-10 w-10 text-cyber-violet" />
-                <span className="font-mono text-xs uppercase tracking-[0.4em] text-foreground/80">
+              <div className="flex h-full flex-col items-center justify-center gap-2">
+                <Lock className="h-8 w-8 text-cyber-violet" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-foreground/80">
                   Classified
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Sorry — can not show
                 </span>
               </div>
             </div>
           )}
-          <div className="p-5">
-            <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <div className="flex flex-1 flex-col p-4">
+            <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
               <span>{project.category}</span>
               <span className="flex items-center gap-1.5">
-                <span
-                  className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[project.status]}`}
-                />
+                <span className={`inline-block h-1.5 w-1.5 animate-pulse-glow rounded-full ${STATUS_COLOR[project.status]}`} />
                 {project.status}
               </span>
             </div>
-            <h3 className="mt-3 font-display text-xl font-semibold leading-snug">
+            <h3 className="mt-2 font-display text-base font-semibold leading-snug">
               {project.name}
             </h3>
-            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
               {project.description}
             </p>
-            <motion.div
-              initial="hidden"
-              animate={ready ? "show" : "hidden"}
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
-              }}
-              className="mt-4 flex flex-wrap gap-1.5"
-            >
+            <div className="mt-auto flex flex-wrap gap-1 pt-3">
               {project.tech.slice(0, 3).map((t) => (
-                <motion.span
+                <span
                   key={t}
-                  variants={tagVariants}
-                  className="rounded-full border border-border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+                  className="rounded-full border border-border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted-foreground"
                 >
                   {t}
-                </motion.span>
+                </span>
               ))}
-              {project.tech.length > 3 && (
-                <motion.span
-                  variants={tagVariants}
-                  className="font-mono text-[10px] text-muted-foreground"
-                >
-                  +{project.tech.length - 3}
-                </motion.span>
-              )}
-            </motion.div>
-            {isPrivate && (
-              <div className="mt-3 inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-wider text-cyber-violet">
-                <Lock className="h-3 w-3" /> source not public
-              </div>
-            )}
+            </div>
           </div>
         </button>
       </TiltCard>
@@ -327,92 +307,56 @@ function ProjectCard({
   );
 }
 
-function ProjectSlot({
-  project,
-  index,
-  onOpen,
-}: {
-  project: Project;
-  index: number;
-  onOpen: () => void;
-}) {
-  const [ready, setReady] = useState(false);
-  return (
-    <SpineCard index={index} onSettled={() => setReady(true)}>
-      <ProjectCard project={project} onOpen={onOpen} ready={ready} />
-    </SpineCard>
-  );
-}
-
 function ProjectsPage() {
   const [open, setOpen] = useState<Project | null>(null);
   const [filter, setFilter] = useState<"all" | "security" | "technical">("all");
-  const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useSpineScrollProgress(containerRef);
-  const isSmall = useIsSmall();
 
   const filtered = PROJECTS.filter((p) => filter === "all" || p.category === filter);
 
   return (
-    <div ref={containerRef} className="relative" style={{ minHeight: "420vh" }}>
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <SectionHeading
-            eyebrow="repo::index"
-            title="11 projects across security & engineering"
-            description="From red team tooling to analog filters — click any card for the full breakdown."
-          />
-        </Reveal>
-
-        <div className="relative z-20 mt-10 flex flex-wrap gap-2">
-          {(["all", "security", "technical"] as const).map((k) => (
-            <button
-              key={k}
-              onClick={() => setFilter(k)}
-              className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all glass-panel gradient-border ${
-                filter === k
-                  ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {k}
-            </button>
-          ))}
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <Reveal>
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
+            <span className="h-px w-8 bg-gradient-to-r from-cyber-cyan to-transparent" />
+            repo::index
+          </div>
+          <h1 className="mt-4 font-display text-4xl font-bold leading-tight sm:text-5xl">
+            11 projects across <span className="text-gradient-cyber">security & engineering</span>
+          </h1>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            From red team tooling to analog filters — click any tile for the full breakdown.
+          </p>
         </div>
+      </Reveal>
+
+      <div className="mt-10 flex flex-wrap gap-2">
+        {(["all", "security", "technical"] as const).map((k) => (
+          <button
+            key={k}
+            onClick={() => setFilter(k)}
+            className={`rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider transition-all glass-panel gradient-border ${
+              filter === k
+                ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {k}
+          </button>
+        ))}
       </div>
 
-      {!isSmall && (
-        <div
-          aria-hidden
-          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
-          style={{ zIndex: 0 }}
-        >
-          <SpineColumn progressRef={progress} />
-        </div>
-      )}
-
-      <div
-        className="relative mx-auto max-w-7xl px-4 sm:px-6"
-        style={{
-          marginTop: isSmall ? 0 : "-100vh",
-          zIndex: 10,
-        }}
-      >
-        <AnimatePresence mode="wait">
-          <motion.ul
-            key={filter}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: EASE }}
-            className="space-y-16 pb-32 pt-8 sm:space-y-24"
-          >
-            {filtered.map((p, i) => (
-              <li key={p.name}>
-                <ProjectSlot project={p} index={i} onOpen={() => setOpen(p)} />
-              </li>
-            ))}
-          </motion.ul>
+      {/* Bento grid */}
+      <div className="mt-10 grid auto-rows-[220px] grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <AnimatePresence mode="popLayout">
+          {filtered.map((p, i) => (
+            <ProjectTile
+              key={p.name}
+              project={p}
+              span={BENTO_SPANS[i % BENTO_SPANS.length]}
+              onOpen={() => setOpen(p)}
+            />
+          ))}
         </AnimatePresence>
       </div>
 
@@ -424,26 +368,18 @@ function ProjectsPage() {
                 <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-cyber-cyan">
                   <span>{open.category}</span>
                   <span className="flex items-center gap-1.5">
-                    <span
-                      className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[open.status]}`}
-                    />
+                    <span className={`inline-block h-2 w-2 animate-pulse-glow rounded-full ${STATUS_COLOR[open.status]}`} />
                     {open.status}
                   </span>
                 </div>
-                <DialogTitle className="mt-2 font-display text-3xl">
-                  {open.name}
-                </DialogTitle>
+                <DialogTitle className="mt-2 font-display text-3xl">{open.name}</DialogTitle>
                 <DialogDescription className="text-base text-muted-foreground">
                   {open.description}
                 </DialogDescription>
               </DialogHeader>
               {open.image ? (
                 <div className="mt-2 aspect-[16/9] w-full overflow-hidden rounded-xl bg-black/40">
-                  <img
-                    src={open.image}
-                    alt={open.name}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={open.image} alt={open.name} className="h-full w-full object-cover" />
                 </div>
               ) : (
                 <div

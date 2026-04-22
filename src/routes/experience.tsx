@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef } from "react";
 import { motion } from "framer-motion";
-import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
-import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
-import { SpineCard } from "@/components/SpineCard";
 import { ExternalLink, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/experience")({
@@ -20,7 +16,7 @@ export const Route = createFileRoute("/experience")({
       {
         property: "og:description",
         content:
-          "Certifications, training, and competition milestones of Mostafa Galal — eJPT, ITI, Red Hat, and TryHackMe achievements.",
+          "Certifications, training, and competition milestones of Mostafa Galal.",
       },
     ],
   }),
@@ -110,47 +106,40 @@ const CTF_ACHIEVEMENTS = [
   { event: "LuxorCTF — Qualifiers", place: "10th", total: "100 teams", note: "Advanced to finals" },
   { event: "LuxorCTF — Finals", place: "7th", total: "Top 10", note: "AI was prohibited" },
   { event: "HackTheBox Global CTF", place: "23rd", total: "1,600+ teams", note: "Global event — taken seriously" },
-  { event: "HackTheBox Platform", place: "Hacker rank", total: "", note: "Other globals — usually top 200 (not taken seriously)" },
+  { event: "HackTheBox Platform", place: "Hacker rank", total: "", note: "Other globals — usually top 200" },
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 type TimelineItem = (typeof TIMELINE)[number];
 
-function TimelineCard({ item }: { item: TimelineItem }) {
+function MilestoneCard({ item, side }: { item: TimelineItem; side: "left" | "right" }) {
   return (
     <motion.div
-      whileHover={{
-        scale: 1.02,
-        boxShadow: "0 0 60px oklch(0.85 0.18 200 / 0.4)",
-      }}
-      transition={{ duration: 0.25, ease: EASE }}
+      initial={{ opacity: 0, x: side === "left" ? -30 : 30, filter: "blur(6px)" }}
+      whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+      viewport={{ once: true, margin: "-15%" }}
+      transition={{ duration: 0.7, ease: EASE }}
+      whileHover={{ scale: 1.02, boxShadow: "0 0 40px oklch(0.85 0.18 200 / 0.3)" }}
       className="group relative overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets"
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/10 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
       />
       {item.image && (
-        <div className="aspect-[16/9] w-full overflow-hidden bg-black/40">
+        <div className="aspect-[16/9] w-full overflow-hidden bg-black/30">
           <img
             src={item.image}
             alt={item.role}
             loading="lazy"
-            className="h-full w-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
           />
         </div>
       )}
-      <div className="p-6">
-        <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
-          {item.year}
-        </div>
-        <h3 className="mt-2 font-display text-xl font-semibold leading-snug">
-          {item.role}
-        </h3>
-        <div className="mt-1 font-mono text-sm text-muted-foreground">
-          @ {item.org}
-        </div>
+      <div className="p-5">
+        <h3 className="font-display text-lg font-semibold leading-snug">{item.role}</h3>
+        <div className="mt-1 font-mono text-xs text-muted-foreground">@ {item.org}</div>
         <p className="mt-3 text-sm leading-relaxed text-foreground/80">{item.body}</p>
         {item.verification && (
           <a
@@ -168,69 +157,81 @@ function TimelineCard({ item }: { item: TimelineItem }) {
 }
 
 function ExperiencePage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useSpineScrollProgress(containerRef);
-  const isSmall = useIsSmall();
-
   return (
     <>
-      <div ref={containerRef} className="relative" style={{ minHeight: "320vh" }}>
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-          <Reveal>
-            <SectionHeading
-              eyebrow="career::log"
-              title="Certifications, training & milestones"
-              description="The roles, the courses, and the wins along the way."
-            />
-          </Reveal>
-        </div>
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <Reveal>
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
+              <span className="h-px w-8 bg-gradient-to-r from-cyber-cyan to-transparent" />
+              career::log
+            </div>
+            <h1 className="mt-4 font-display text-4xl font-bold leading-tight sm:text-5xl">
+              Certifications, training & <span className="text-gradient-cyber">milestones</span>
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+              The roles, the courses, and the wins along the way — scrolled along a single rail.
+            </p>
+          </div>
+        </Reveal>
 
-        {!isSmall && (
+        {/* Timeline rail */}
+        <div className="relative mt-20">
+          {/* the rail line */}
           <div
             aria-hidden
-            className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
-            style={{ zIndex: 0 }}
-          >
-            <SpineColumn progressRef={progress} />
-          </div>
-        )}
+            className="pointer-events-none absolute left-4 top-0 h-full w-px bg-gradient-to-b from-cyber-cyan via-cyber-violet to-cyber-magenta sm:left-1/2 sm:-translate-x-1/2"
+            style={{ boxShadow: "0 0 12px oklch(0.85 0.18 200 / 0.6)" }}
+          />
 
-        <div
-          className="relative mx-auto max-w-7xl px-4 sm:px-6"
-          style={{
-            marginTop: isSmall ? 0 : "-100vh",
-            zIndex: 10,
-          }}
-        >
-          <ul className="space-y-16 pb-24 pt-8 sm:space-y-24">
-            {TIMELINE.map((item, i) => (
-              <li key={item.year + item.role} className="relative">
-                {!isSmall && (
+          <ul className="relative space-y-16 sm:space-y-24">
+            {TIMELINE.map((item, i) => {
+              const side: "left" | "right" = i % 2 === 0 ? "right" : "left";
+              return (
+                <li key={item.year + item.role} className="relative">
+                  {/* node */}
+                  <div className="absolute left-4 top-2 z-10 -translate-x-1/2 sm:left-1/2">
+                    <div className="grid h-4 w-4 place-items-center rounded-full bg-background ring-2 ring-cyber-cyan shadow-[0_0_18px_oklch(0.85_0.18_200/0.8)]">
+                      <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-cyber-cyan" />
+                    </div>
+                  </div>
+
+                  {/* year badge */}
                   <div
-                    aria-hidden
-                    className="pointer-events-none absolute left-1/2 top-2 z-20 -translate-x-1/2 font-mono text-xs uppercase tracking-[0.3em] text-cyber-cyan"
-                    style={{ textShadow: "0 0 12px oklch(0.85 0.18 200 / 0.6)" }}
+                    className={`mb-3 ml-10 inline-block rounded-full px-3 py-1 font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan glass-panel gradient-border sm:absolute sm:top-0 sm:ml-0 ${
+                      side === "right" ? "sm:left-[calc(50%+2.5rem)]" : "sm:right-[calc(50%+2.5rem)]"
+                    }`}
                   >
                     {item.year}
                   </div>
-                )}
-                <SpineCard index={i}>
-                  <TimelineCard item={item} />
-                </SpineCard>
-              </li>
-            ))}
+
+                  {/* card */}
+                  <div
+                    className={`ml-10 mt-3 sm:ml-0 sm:mt-12 sm:w-[calc(50%-2.5rem)] ${
+                      side === "right" ? "sm:ml-auto" : ""
+                    }`}
+                  >
+                    <MilestoneCard item={item} side={side} />
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
 
-      {/* CTF Achievements — separate sub-section */}
+      {/* CTF Achievements grid */}
       <section className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <Reveal>
-          <SectionHeading
-            eyebrow="ctf::scoreboard"
-            title="Competition placements"
-            description="Selected results across global and regional CTF events."
-          />
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
+              <span className="h-px w-8 bg-gradient-to-r from-cyber-cyan to-transparent" />
+              ctf::scoreboard
+            </div>
+            <h2 className="mt-4 font-display text-3xl font-bold sm:text-4xl">
+              Competition <span className="text-gradient-cyber">placements</span>
+            </h2>
+          </div>
         </Reveal>
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {CTF_ACHIEVEMENTS.map((c, i) => (
@@ -245,9 +246,7 @@ function ExperiencePage() {
                     <Trophy className="h-3 w-3" /> {c.place}
                   </div>
                   {c.total && (
-                    <div className="font-mono text-[10px] text-muted-foreground">
-                      / {c.total}
-                    </div>
+                    <div className="font-mono text-[10px] text-muted-foreground">/ {c.total}</div>
                   )}
                 </div>
                 <h3 className="mt-2 font-display text-lg font-semibold">{c.event}</h3>

@@ -1,17 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, Terminal } from "lucide-react";
+import { Menu, X, Terminal, Home, Network, Crosshair, LayoutGrid, GitBranch, FileWarning, ScrollText, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/about", label: "About" },
-  { to: "/skills", label: "Skills" },
-  { to: "/projects", label: "Projects" },
-  { to: "/experience", label: "Experience" },
-  { to: "/writeups", label: "Writeups" },
-  { to: "/services", label: "Services" },
-  { to: "/contact", label: "Contact" },
+  { to: "/", label: "Home", Icon: Home },
+  { to: "/about", label: "About", Icon: Network },
+  { to: "/skills", label: "Skills", Icon: Crosshair },
+  { to: "/projects", label: "Projects", Icon: LayoutGrid },
+  { to: "/experience", label: "Experience", Icon: GitBranch },
+  { to: "/writeups", label: "Writeups", Icon: FileWarning },
+  { to: "/services", label: "Services", Icon: ScrollText },
+  { to: "/contact", label: "Contact", Icon: Mail },
 ] as const;
 
 export function SiteHeader() {
@@ -62,12 +62,13 @@ export function SiteHeader() {
           {NAV.map((item) => {
             const active =
               item.to === "/" ? path === "/" : path.startsWith(item.to);
+            const Icon = item.Icon;
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "relative rounded-full px-3.5 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors",
+                  "relative inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors",
                   active
                     ? "text-cyber-cyan"
                     : "text-muted-foreground hover:text-foreground",
@@ -83,6 +84,7 @@ export function SiteHeader() {
                     }}
                   />
                 )}
+                <Icon className="h-3 w-3 shrink-0" />
                 {item.label}
               </Link>
             );
@@ -112,17 +114,19 @@ export function SiteHeader() {
               {NAV.map((item) => {
                 const active =
                   item.to === "/" ? path === "/" : path.startsWith(item.to);
+                const Icon = item.Icon;
                 return (
                   <Link
                     key={item.to}
                     to={item.to}
                     className={cn(
-                      "rounded-lg px-3 py-2 font-mono text-sm transition-colors",
+                      "inline-flex items-center gap-2 rounded-lg px-3 py-2 font-mono text-sm transition-colors",
                       active
                         ? "bg-cyber-cyan/10 text-cyber-cyan"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
+                    <Icon className="h-3.5 w-3.5" />
                     {item.label}
                   </Link>
                 );
