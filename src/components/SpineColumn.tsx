@@ -168,7 +168,7 @@ function Vertebra({
 
 /** Custom shader chunks: inject a cyan fresnel rim into the standard material. */
 function patchFresnelRim(mat: THREE.Material, color: THREE.Color, power = 2.5) {
-  mat.onBeforeCompile = (shader) => {
+  mat.onBeforeCompile = (shader: THREE.Shader) => {
     shader.uniforms.uRimColor = { value: color };
     shader.uniforms.uRimPower = { value: power };
     shader.fragmentShader = shader.fragmentShader
