@@ -1,17 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, Terminal } from "lucide-react";
+import { Menu, X, Terminal, Home, Network, Crosshair, LayoutGrid, GitBranch, FileWarning, ScrollText, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/about", label: "About" },
-  { to: "/skills", label: "Skills" },
-  { to: "/projects", label: "Projects" },
-  { to: "/experience", label: "Experience" },
-  { to: "/writeups", label: "Writeups" },
-  { to: "/services", label: "Services" },
-  { to: "/contact", label: "Contact" },
+  { to: "/", label: "Home", Icon: Home },
+  { to: "/about", label: "About", Icon: Network },
+  { to: "/skills", label: "Skills", Icon: Crosshair },
+  { to: "/projects", label: "Projects", Icon: LayoutGrid },
+  { to: "/experience", label: "Experience", Icon: GitBranch },
+  { to: "/writeups", label: "Writeups", Icon: FileWarning },
+  { to: "/services", label: "Services", Icon: ScrollText },
+  { to: "/contact", label: "Contact", Icon: Mail },
 ] as const;
 
 export function SiteHeader() {
