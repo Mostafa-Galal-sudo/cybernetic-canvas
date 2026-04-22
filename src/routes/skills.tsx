@@ -1,11 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useRef } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
-import { SectionHeading } from "@/components/SectionHeading";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Reveal } from "@/components/Reveal";
-import { TiltCard } from "@/components/TiltCard";
-import { SpineColumn, useSpineScrollProgress, useIsSmall } from "@/components/SpineColumn";
-import { SpineCard } from "@/components/SpineCard";
 import { Sword, ShieldCheck, Code2, Wrench, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +12,13 @@ export const Route = createFileRoute("/skills")({
       {
         name: "description",
         content:
-          "Offensive security, networking, languages, tooling, and embedded systems — the stack Mostafa Galal works with.",
+          "The arsenal — offensive security, networking, languages, tooling, and embedded systems Mostafa Galal works with.",
       },
       { property: "og:title", content: "Skills — Mostafa Galal" },
       {
         property: "og:description",
         content:
-          "Offensive security, networking, languages, tooling, and embedded systems — the stack Mostafa Galal works with.",
+          "The arsenal — offensive security, networking, languages, tooling, and embedded systems.",
       },
     ],
   }),
@@ -97,57 +93,60 @@ const CATEGORIES: Category[] = [
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-function AnimatedBar({ level }: { level: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "0px 0px -8% 0px" });
-
-  return (
-    <div ref={ref} className="relative mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
-      <motion.div
-        className="absolute inset-y-0 left-0 origin-left rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet"
-        style={{ width: `${level}%` }}
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: inView ? 1 : 0 }}
-        transition={{ duration: 1.4, ease: EASE }}
-      />
-      <motion.div
-        className="absolute inset-y-0 left-0 origin-left rounded-full bg-gradient-to-r from-cyber-cyan/60 to-cyber-violet/60 blur-[4px]"
-        style={{ width: `${level}%` }}
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: inView ? 1 : 0 }}
-        transition={{ duration: 1.4, ease: EASE, delay: 0.08 }}
-      />
-    </div>
-  );
-}
-
-function SkillCard({ skill }: { skill: Skill }) {
+function WeaponMount({ skill, idx }: { skill: Skill; idx: number }) {
   return (
     <motion.div
-      whileHover={{ scale: 1.02, boxShadow: "0 0 36px oklch(0.85 0.18 200 / 0.35)" }}
-      transition={{ duration: 0.25, ease: EASE }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: EASE, delay: idx * 0.04 }}
+      className="group relative"
     >
-      <TiltCard
-        intensity={6}
-        className="group relative h-full overflow-hidden rounded-2xl glass-panel gradient-border corner-brackets cursor-default"
+      {/* hook / mount */}
+      <div className="absolute left-1/2 top-0 h-3 w-px -translate-x-1/2 bg-gradient-to-b from-cyber-cyan/60 to-transparent" />
+      <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-cyber-cyan/70 shadow-[0_0_10px_oklch(0.85_0.18_200/0.8)]" />
+
+      <div
+        className="relative mt-5 overflow-hidden rounded-xl p-4 glass-panel gradient-border corner-brackets transition-all duration-300 group-hover:-translate-y-1"
+        style={{
+          boxShadow: "inset 0 0 30px oklch(0 0 0 / 0.4)",
+        }}
       >
-        <div className="p-6">
-          <div className="flex items-baseline justify-between">
-            <h3 className="font-display text-lg font-semibold transition-colors duration-300 group-hover:text-cyber-cyan">
-              {skill.name}
-            </h3>
-            <span className="font-mono text-xs tabular-nums text-cyber-cyan">{skill.level}%</span>
-          </div>
-          <AnimatedBar level={skill.level} />
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/80">
-            {skill.note}
-          </p>
-        </div>
+        {/* spotlight on hover */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -translate-x-full rounded-2xl bg-gradient-to-r from-transparent via-cyber-cyan/8 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+          className="pointer-events-none absolute -top-12 left-1/2 h-24 w-40 -translate-x-1/2 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+          style={{ background: "oklch(0.85 0.18 200 / 0.45)" }}
         />
-      </TiltCard>
+
+        <div className="flex items-start justify-between">
+          <h3 className="font-display text-base font-semibold leading-tight transition-colors duration-300 group-hover:text-cyber-cyan">
+            {skill.name}
+          </h3>
+          <span className="ml-2 font-mono text-[10px] tabular-nums text-cyber-cyan">
+            {skill.level}
+          </span>
+        </div>
+
+        {/* level bar like a gauge */}
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-black/50 ring-1 ring-cyber-cyan/20">
+          <motion.div
+            className="h-full origin-left rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet"
+            initial={{ scaleX: 0 }}
+            whileInView={{ scaleX: skill.level / 100 }}
+            viewport={{ once: true, margin: "-10%" }}
+            transition={{ duration: 1.2, ease: EASE, delay: 0.1 + idx * 0.03 }}
+          />
+        </div>
+
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-foreground/85">
+          {skill.note}
+        </p>
+
+        {/* serial tag */}
+        <div className="mt-3 inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wider text-muted-foreground/60">
+          SN-{(idx + 1).toString().padStart(3, "0")}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -155,92 +154,84 @@ function SkillCard({ skill }: { skill: Skill }) {
 function SkillsPage() {
   const [active, setActive] = useState<string>(CATEGORIES[0].key);
   const cat = CATEGORIES.find((c) => c.key === active)!;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const progress = useSpineScrollProgress(containerRef);
-  const isSmall = useIsSmall();
 
   return (
-    <div ref={containerRef} className="relative" style={{ minHeight: "260vh" }}>
-      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
-        <Reveal>
-          <SectionHeading
-            eyebrow="capabilities::matrix"
-            title="The stack I attack and build with"
-            description="Hover any skill to read context. Switch categories to drill in."
-          />
-        </Reveal>
-
-        <div className="relative z-20 mt-10 flex flex-wrap gap-2">
-          {CATEGORIES.map(({ key, Icon, title }) => {
-            const isActive = key === active;
-            return (
-              <motion.button
-                key={key}
-                onClick={() => setActive(key)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                transition={{ duration: 0.2, ease: EASE }}
-                className={cn(
-                  "group relative inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all duration-300",
-                  isActive
-                    ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
-                    : "text-muted-foreground hover:text-foreground hover:shadow-[0_0_12px_oklch(0.85_0.18_200/0.15)]",
-                )}
-              >
-                <motion.span
-                  animate={{ scale: isActive ? 1.2 : 1 }}
-                  transition={{ duration: 0.3, ease: EASE }}
-                  className="flex"
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                </motion.span>
-                {title}
-                {isActive && (
-                  <motion.span
-                    layoutId="active-dot"
-                    className="ml-0.5 h-1 w-1 rounded-full bg-cyber-cyan"
-                  />
-                )}
-              </motion.button>
-            );
-          })}
+    <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+      <Reveal>
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
+            <span className="h-px w-8 bg-gradient-to-r from-cyber-cyan to-transparent" />
+            arsenal::wall
+          </div>
+          <h1 className="mt-4 font-display text-4xl font-bold leading-tight sm:text-5xl">
+            The <span className="text-gradient-cyber">arsenal</span> on the wall
+          </h1>
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground">
+            Each tool mounted, tagged, and ready. Pick a category — hover any tool to light it up.
+          </p>
         </div>
+      </Reveal>
+
+      <div className="mt-10 flex flex-wrap gap-2">
+        {CATEGORIES.map(({ key, Icon, title }) => {
+          const isActive = key === active;
+          return (
+            <button
+              key={key}
+              onClick={() => setActive(key)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider glass-panel gradient-border transition-all",
+                isActive
+                  ? "text-cyber-cyan shadow-[0_0_24px_oklch(0.85_0.18_200/0.35)]"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {title}
+              {isActive && <span className="ml-1 h-1 w-1 rounded-full bg-cyber-cyan" />}
+            </button>
+          );
+        })}
       </div>
 
-      {!isSmall && (
-        <div
-          aria-hidden
-          className="pointer-events-none sticky top-0 hidden h-screen w-full sm:block"
-          style={{ zIndex: 0 }}
-        >
-          <SpineColumn progressRef={progress} />
-        </div>
-      )}
-
+      {/* the wall */}
       <div
-        className="relative mx-auto max-w-7xl px-4 sm:px-6"
+        className="relative mt-12 overflow-hidden rounded-3xl p-6 sm:p-10"
         style={{
-          marginTop: isSmall ? 0 : "-100vh",
-          zIndex: 10,
+          background:
+            "linear-gradient(180deg, oklch(0.12 0.02 265) 0%, oklch(0.09 0.015 265) 100%)",
+          boxShadow:
+            "inset 0 30px 60px oklch(0 0 0 / 0.5), inset 0 -30px 60px oklch(0 0 0 / 0.4)",
+          border: "1px solid var(--glass-border)",
         }}
       >
+        {/* horizontal mount rails */}
+        <div className="pointer-events-none absolute inset-x-6 top-3 h-px bg-gradient-to-r from-transparent via-cyber-cyan/40 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-cyber-violet/30 to-transparent" />
+
+        {/* faint planks */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, transparent 0 80px, oklch(1 0 0 / 0.02) 80px 81px)",
+          }}
+        />
+
         <AnimatePresence mode="wait">
-          <motion.ul
+          <motion.div
             key={active}
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: EASE }}
-            className="space-y-16 pb-32 pt-8 sm:space-y-20"
+            transition={{ duration: 0.3, ease: EASE }}
+            className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
             {cat.skills.map((s, i) => (
-              <li key={s.name}>
-                <SpineCard index={i}>
-                  <SkillCard skill={s} />
-                </SpineCard>
-              </li>
+              <WeaponMount key={s.name} skill={s} idx={i} />
             ))}
-          </motion.ul>
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>
