@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Github, Linkedin, Award, Mail } from "lucide-react";
+import { Github, Linkedin, Instagram, Facebook, Mail } from "lucide-react";
+
+const SOCIALS = [
+  { Icon: Github,    href: "https://github.com/Mostafa-Galal-sudo",                    label: "GitHub" },
+  { Icon: Linkedin,  href: "https://www.linkedin.com/in/mostafa-galal-97148b216/",     label: "LinkedIn" },
+  { Icon: Instagram, href: "https://www.instagram.com/mostafa__galal_11/",             label: "Instagram" },
+  { Icon: Facebook,  href: "https://www.facebook.com/mostafa.galal.7545",              label: "Facebook" },
+  { Icon: Mail,      href: "mailto:mosthistory139@gmail.com",                          label: "Email" },
+];
 
 export function SiteFooter() {
   return (
@@ -31,24 +39,25 @@ export function SiteFooter() {
             <div className="font-mono text-xs uppercase tracking-wider text-cyber-cyan">
               Connect
             </div>
-            <div className="mt-3 flex gap-2">
-              {[
-                { Icon: Github, href: "https://github.com/", label: "GitHub" },
-                { Icon: Linkedin, href: "https://linkedin.com/", label: "LinkedIn" },
-                { Icon: Award, href: "https://tryhackme.com/", label: "TryHackMe" },
-                { Icon: Mail, href: "/contact", label: "Email" },
-              ].map(({ Icon, href, label }) => (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {SOCIALS.map(({ Icon, href, label }) => (
                 <a
                   key={label}
                   href={href}
                   target={href.startsWith("http") ? "_blank" : undefined}
                   rel={href.startsWith("http") ? "noreferrer" : undefined}
                   aria-label={label}
+                  title={label}
                   className="grid h-10 w-10 place-items-center rounded-md text-muted-foreground transition-all hover:text-cyber-cyan hover:shadow-[0_0_24px_oklch(0.85_0.18_200/0.45)] glass-panel gradient-border"
                 >
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
+            </div>
+            <div className="mt-3 font-mono text-[11px] text-muted-foreground">
+              <a href="mailto:mosthistory139@gmail.com" className="hover:text-cyber-cyan">
+                mosthistory139@gmail.com
+              </a>
             </div>
           </div>
         </div>
