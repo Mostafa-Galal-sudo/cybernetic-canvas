@@ -4,7 +4,7 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Github, Linkedin, Mail, Send, Award } from "lucide-react";
+import { Github, Linkedin, Mail, Send, Instagram, Facebook } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -84,11 +84,12 @@ function ContactPage() {
                 channels
               </div>
               <ul className="mt-4 space-y-3">
-                {[
-                  { Icon: Mail, label: "email", value: "Reach via form", href: "#" },
-                  { Icon: Github, label: "github", value: "github.com/MostafaGalal", href: "https://github.com/" },
-                  { Icon: Linkedin, label: "linkedin", value: "linkedin.com/in/mostafa-galal", href: "https://linkedin.com/" },
-                  { Icon: Award, label: "tryhackme", value: "tryhackme.com/p/MostafaGalal", href: "https://tryhackme.com/" },
+              {[
+                  { Icon: Mail, label: "email", value: "mosthistory139@gmail.com", href: "mailto:mosthistory139@gmail.com" },
+                  { Icon: Github, label: "github", value: "Mostafa-Galal-sudo", href: "https://github.com/Mostafa-Galal-sudo" },
+                  { Icon: Linkedin, label: "linkedin", value: "mostafa-galal-97148b216", href: "https://www.linkedin.com/in/mostafa-galal-97148b216/" },
+                  { Icon: Instagram, label: "instagram", value: "mostafa__galal_11", href: "https://www.instagram.com/mostafa__galal_11/" },
+                  { Icon: Facebook, label: "facebook", value: "mostafa.galal.7545", href: "https://www.facebook.com/mostafa.galal.7545" },
                 ].map(({ Icon, label, value, href }) => (
                   <a
                     key={label}
