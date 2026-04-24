@@ -145,7 +145,7 @@ function MilestoneCard({ item, side }: { item: TimelineItem; side: "left" | "rig
           <a
             href={item.verification}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="mt-4 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-cyber-cyan hover:underline"
           >
             <ExternalLink className="h-3 w-3" /> verify

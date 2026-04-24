@@ -95,7 +95,7 @@ function ContactPage() {
                     key={label}
                     href={href}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-md text-cyber-cyan glass-panel gradient-border transition-shadow group-hover:shadow-[0_0_20px_oklch(0.85_0.18_200/0.5)]">
@@ -120,7 +120,7 @@ function ContactPage() {
               <a
                 href="https://certs.ine.com/bdf79a3b-3819-422f-b284-44dec448edb1#acc.dEjlnfeV"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="mt-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-cyber-cyan"
               >
                 verify eJPT →

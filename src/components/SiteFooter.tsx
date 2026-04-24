@@ -45,7 +45,7 @@ export function SiteFooter() {
                   key={label}
                   href={href}
                   target={href.startsWith("http") ? "_blank" : undefined}
-                  rel={href.startsWith("http") ? "noreferrer" : undefined}
+                  rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
                   aria-label={label}
                   title={label}
                   className="grid h-10 w-10 place-items-center rounded-md text-muted-foreground transition-all hover:text-cyber-cyan hover:shadow-[0_0_24px_oklch(0.85_0.18_200/0.45)] glass-panel gradient-border"

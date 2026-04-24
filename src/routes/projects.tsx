@@ -1154,7 +1154,7 @@ function ProjectsPage() {
                 <a
                   href={activeProject.github}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground hover:border-cyber-cyan/40 hover:text-cyber-cyan"
                 >
                   <Github className="h-3 w-3" />
@@ -1165,7 +1165,7 @@ function ProjectsPage() {
                 <a
                   href={activeProject.demo}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-border bg-black/40 px-2 py-1.5 font-mono text-[10px] uppercase tracking-wider text-foreground hover:border-cyber-cyan/40 hover:text-cyber-cyan"
                 >
                   <ExternalLink className="h-3 w-3" />
