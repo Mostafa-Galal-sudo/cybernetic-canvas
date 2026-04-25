@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useForm, ValidationError } from "@formspree/react";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Github, Linkedin, Mail, Send, Instagram, Facebook } from "lucide-react";
+import {
+  Github, Linkedin, Mail, Send, Instagram, Facebook, Loader2,
+} from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -27,17 +29,11 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const [sending, setSending] = useState(false);
+  const [state, handleSubmit] = useForm("mvzdldjb");
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setSending(true);
-    setTimeout(() => {
-      setSending(false);
-      toast.success("Transmission received — I'll respond within 48h.");
-      (e.target as HTMLFormElement).reset();
-    }, 900);
-  };
+  if (state.succeeded) {
+    toast.success("Transmission received — I'll respond within 48h.");
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
@@ -52,7 +48,7 @@ function ContactPage() {
       <div className="mt-14 grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <Reveal>
           <form
-            onSubmit={onSubmit}
+            onSubmit={handleSubmit}
             className="relative overflow-hidden rounded-3xl p-8 glass-panel gradient-border corner-brackets"
           >
             <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
@@ -60,20 +56,74 @@ function ContactPage() {
             </div>
 
             <div className="mt-6 space-y-5">
-              <FloatField id="name" label="Your name" type="text" required />
-              <FloatField id="email" label="Your email" type="email" required />
-              <FloatField id="subject" label="Subject" type="text" />
-              <FloatField id="message" label="Message" textarea required />
+              <FloatField
+                id="name"
+                label="Your name"
+                type="text"
+                name="name"
+                required
+              />
+              <FloatField
+                id="email"
+                label="Your email"
+                type="email"
+                name="email"
+                required
+              />
+              <ValidationError
+                prefix="Email"
+                field="email"
+                errors={state.errors}
+                className="block font-mono text-[10px] uppercase tracking-wider text-rose-400"
+              />
+              <FloatField
+                id="subject"
+                label="Subject"
+                type="text"
+                name="subject"
+              />
+              <FloatField
+                id="message"
+                label="Message"
+                textarea
+                name="message"
+                required
+              />
+              <ValidationError
+                prefix="Message"
+                field="message"
+                errors={state.errors}
+                className="block font-mono text-[10px] uppercase tracking-wider text-rose-400"
+              />
             </div>
 
             <button
               type="submit"
-              disabled={sending}
+              disabled={state.submitting || state.succeeded}
               className="mt-7 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet px-6 py-3 font-mono text-xs uppercase tracking-wider text-background transition-shadow hover:shadow-[0_0_36px_oklch(0.85_0.18_200/0.55)] disabled:opacity-60"
             >
-              {sending ? "Encrypting..." : "Send transmission"}
-              <Send className="h-4 w-4" />
+              {state.submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Encrypting...
+                </>
+              ) : state.succeeded ? (
+                <>
+                  Sent ✓
+                </>
+              ) : (
+                <>
+                  Send transmission
+                  <Send className="h-4 w-4" />
+                </>
+              )}
             </button>
+
+            {state.succeeded && (
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-wider text-emerald-400">
+                ✓ Message delivered — check your inbox for confirmation.
+              </p>
+            )}
           </form>
         </Reveal>
 
@@ -84,12 +134,37 @@ function ContactPage() {
                 channels
               </div>
               <ul className="mt-4 space-y-3">
-              {[
-                  { Icon: Mail, label: "email", value: "mosthistory139@gmail.com", href: "mailto:mosthistory139@gmail.com" },
-                  { Icon: Github, label: "github", value: "Mostafa-Galal-sudo", href: "https://github.com/Mostafa-Galal-sudo" },
-                  { Icon: Linkedin, label: "linkedin", value: "mostafa-galal-97148b216", href: "https://www.linkedin.com/in/mostafa-galal-97148b216/" },
-                  { Icon: Instagram, label: "instagram", value: "mostafa__galal_11", href: "https://www.instagram.com/mostafa__galal_11/" },
-                  { Icon: Facebook, label: "facebook", value: "mostafa.galal.7545", href: "https://www.facebook.com/mostafa.galal.7545" },
+                {[
+                  {
+                    Icon: Mail,
+                    label: "email",
+                    value: "mosthistory139@gmail.com",
+                    href: "mailto:mosthistory139@gmail.com",
+                  },
+                  {
+                    Icon: Github,
+                    label: "github",
+                    value: "Mostafa-Galal-sudo",
+                    href: "https://github.com/Mostafa-Galal-sudo",
+                  },
+                  {
+                    Icon: Linkedin,
+                    label: "linkedin",
+                    value: "mostafa-galal-97148b216",
+                    href: "https://www.linkedin.com/in/mostafa-galal-97148b216/",
+                  },
+                  {
+                    Icon: Instagram,
+                    label: "instagram",
+                    value: "mostafa__galal_11",
+                    href: "https://www.instagram.com/mostafa__galal_11/",
+                  },
+                  {
+                    Icon: Facebook,
+                    label: "facebook",
+                    value: "mostafa.galal.7545",
+                    href: "https://www.facebook.com/mostafa.galal.7545",
+                  },
                 ].map(({ Icon, label, value, href }) => (
                   <a
                     key={label}
@@ -102,7 +177,9 @@ function ContactPage() {
                       <Icon className="h-4 w-4" />
                     </span>
                     <span>
-                      <div className="font-mono text-xs text-muted-foreground">{label}</div>
+                      <div className="font-mono text-xs text-muted-foreground">
+                        {label}
+                      </div>
                       <div className="text-sm font-medium">{value}</div>
                     </span>
                   </a>
@@ -115,7 +192,8 @@ function ContactPage() {
                 credentials
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                eJPT certified · ITI Cybersecurity (90h) · Red Hat SA-I · Communications & Electronics Engineering student.
+                eJPT certified · ITI Cybersecurity (90h) · Red Hat SA-I ·
+                Communications & Electronics Engineering student.
               </p>
               <a
                 href="https://certs.ine.com/bdf79a3b-3819-422f-b284-44dec448edb1#acc.dEjlnfeV"
@@ -141,12 +219,14 @@ function FloatField({
   type = "text",
   textarea,
   required,
+  name,
 }: {
   id: string;
   label: string;
   type?: string;
   textarea?: boolean;
   required?: boolean;
+  name: string;
 }) {
   const Common =
     "peer w-full rounded-lg border border-border bg-background/40 px-4 pt-5 pb-2 text-sm text-foreground outline-none transition-all placeholder-transparent focus:border-cyber-cyan focus:shadow-[0_0_24px_oklch(0.85_0.18_200/0.25)]";
@@ -155,7 +235,7 @@ function FloatField({
       {textarea ? (
         <textarea
           id={id}
-          name={id}
+          name={name}
           required={required}
           rows={5}
           placeholder={label}
@@ -164,7 +244,7 @@ function FloatField({
       ) : (
         <input
           id={id}
-          name={id}
+          name={name}
           type={type}
           required={required}
           placeholder={label}
