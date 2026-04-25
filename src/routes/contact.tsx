@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useForm, ValidationError } from "@formspree/react";
+import { useState, type FormEvent } from "react";
 import { SectionHeading } from "@/components/SectionHeading";
 import { Reveal } from "@/components/Reveal";
 import { toast } from "sonner";
@@ -28,12 +28,41 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
-function ContactPage() {
-  const [state, handleSubmit] = useForm("mvzdldjb");
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mvzdldjb";
 
-  if (state.succeeded) {
-    toast.success("Transmission received — I'll respond within 48h.");
-  }
+function ContactPage() {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (sent) return;
+
+    setSending(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        body: formData,
+        headers: { Accept: "application/json" },
+      });
+
+      if (res.ok) {
+        setSent(true);
+        toast.success("Transmission received — I'll respond within 48h.");
+        form.reset();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || "Transmission failed. Try again later.");
+      }
+    } catch {
+      toast.error("Network error. Check your connection and retry.");
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
@@ -48,7 +77,7 @@ function ContactPage() {
       <div className="mt-14 grid gap-8 lg:grid-cols-[1.3fr_1fr]">
         <Reveal>
           <form
-            onSubmit={handleSubmit}
+            onSubmit={onSubmit}
             className="relative overflow-hidden rounded-3xl p-8 glass-panel gradient-border corner-brackets"
           >
             <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
@@ -56,61 +85,24 @@ function ContactPage() {
             </div>
 
             <div className="mt-6 space-y-5">
-              <FloatField
-                id="name"
-                label="Your name"
-                type="text"
-                name="name"
-                required
-              />
-              <FloatField
-                id="email"
-                label="Your email"
-                type="email"
-                name="email"
-                required
-              />
-              <ValidationError
-                prefix="Email"
-                field="email"
-                errors={state.errors}
-                className="block font-mono text-[10px] uppercase tracking-wider text-rose-400"
-              />
-              <FloatField
-                id="subject"
-                label="Subject"
-                type="text"
-                name="subject"
-              />
-              <FloatField
-                id="message"
-                label="Message"
-                textarea
-                name="message"
-                required
-              />
-              <ValidationError
-                prefix="Message"
-                field="message"
-                errors={state.errors}
-                className="block font-mono text-[10px] uppercase tracking-wider text-rose-400"
-              />
+              <FloatField id="name" label="Your name" type="text" name="name" required />
+              <FloatField id="email" label="Your email" type="email" name="email" required />
+              <FloatField id="subject" label="Subject" type="text" name="subject" />
+              <FloatField id="message" label="Message" textarea name="message" required />
             </div>
 
             <button
               type="submit"
-              disabled={state.submitting || state.succeeded}
+              disabled={sending || sent}
               className="mt-7 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyber-cyan to-cyber-violet px-6 py-3 font-mono text-xs uppercase tracking-wider text-background transition-shadow hover:shadow-[0_0_36px_oklch(0.85_0.18_200/0.55)] disabled:opacity-60"
             >
-              {state.submitting ? (
+              {sending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Encrypting...
                 </>
-              ) : state.succeeded ? (
-                <>
-                  Sent ✓
-                </>
+              ) : sent ? (
+                <>Sent ✓</>
               ) : (
                 <>
                   Send transmission
@@ -119,7 +111,7 @@ function ContactPage() {
               )}
             </button>
 
-            {state.succeeded && (
+            {sent && (
               <p className="mt-4 font-mono text-[10px] uppercase tracking-wider text-emerald-400">
                 ✓ Message delivered — check your inbox for confirmation.
               </p>
