@@ -1,3 +1,4 @@
+```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Reveal } from "@/components/Reveal";
@@ -35,7 +36,7 @@ const POSTS: {
   cvss: string;
   classification: string;
   trkId: string;
-  pdfUrl: string | null; // null = PDF مش موجود لسه
+  pdfUrl: string | null;
 }[] = [
   {
     slug: "snapchat-smtp-open-relay",
@@ -48,7 +49,7 @@ const POSTS: {
     cvss: "8.1",
     classification: "BUG-BOUNTY",
     trkId: "TIB-2025-001",
-    pdfUrl: null, // ← لسه مرفوعش
+    pdfUrl: null,
   },
   {
     slug: "0xl0ccedc0de-revenge",
@@ -165,7 +166,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-010",
-    pdfUrl: null, // ← لسه مرفوعش
+    pdfUrl: null,
   },
   {
     slug: "journey-into-red-teaming",
@@ -178,7 +179,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-011",
-    pdfUrl: null, // ← لسه مرفوعش
+    pdfUrl: null,
   },
 ];
 
@@ -193,6 +194,12 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number }) {
   const sev = SEV_STYLE[post.severity];
+
+  const handleClick = () => {
+    if (!post.pdfUrl) return;
+    window.open(encodeURI(post.pdfUrl), "_blank", "noopener,noreferrer");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -201,12 +208,11 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
       transition={{ duration: 0.5, ease: EASE, delay: (idx % 4) * 0.05 }}
       whileHover={{ y: -4, boxShadow: "0 20px 40px oklch(0 0 0 / 0.4), 0 0 30px oklch(0.85 0.18 200 / 0.25)" }}
     >
-      {/* ↓ التغيير الوحيد هنا: href → pdfUrl ، target="_blank" */}
-      
-        href={post.pdfUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group relative block overflow-hidden rounded-xl glass-panel gradient-border"
+      <div
+        onClick={handleClick}
+        className={`group relative block overflow-hidden rounded-xl glass-panel gradient-border ${
+          post.pdfUrl ? "cursor-pointer" : "cursor-not-allowed opacity-70"
+        }`}
       >
         {/* header strip */}
         <div
@@ -239,6 +245,7 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
             {post.title}
           </h3>
 
+          {/* redacted accent line */}
           <div className="mt-3 flex items-center gap-2">
             <span className="h-2 w-12 rounded-sm bg-foreground/30" />
             <span className="h-2 w-6 rounded-sm bg-foreground/20" />
@@ -261,7 +268,8 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
           </div>
 
           <div className="mt-5 inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-cyber-cyan">
-            <FileWarning className="h-3 w-3" /> open full briefing →
+            <FileWarning className="h-3 w-3" />
+            {post.pdfUrl ? "open full briefing →" : "coming soon"}
           </div>
         </div>
 
@@ -273,7 +281,7 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
         >
           confidential
         </div>
-      </a>
+      </div>
     </motion.div>
   );
 }
@@ -305,3 +313,4 @@ function WriteupsPage() {
     </div>
   );
 }
+```
