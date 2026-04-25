@@ -106,8 +106,7 @@ Active · adding YARA-style rule packs next.
       {
         name: "NM-Analyzer.py",
         lang: "py",
-        content: `
-#!/usr/bin/env python3
+        content: `#!/usr/bin/env python3
 import subprocess
 import sys
 import json
@@ -270,7 +269,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-,
+`,
       },
       {
         name: "rules.json",
@@ -655,8 +654,7 @@ can be extracted from raw input streams. **Lab-only.**
       {
         name: "keylogger.py",
         lang: "py",
-        content: `
-#!/usr/bin/env python3
+        content: `#!/usr/bin/env python3
 """Keylogger client — sends keystroke telemetry to server"""
 import keyboard, json, requests, threading, time
 from datetime import datetime
@@ -687,7 +685,7 @@ keyboard.on_press(on_key)
 threading.Timer(5.0, flush).start()
 print("[*] Keylogger active — press Ctrl+C to stop")
 keyboard.wait()
-,
+`,
       },
       {
         name: "server.py",
@@ -791,20 +789,25 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     name: "TCP Full Scan Tool",
     domain: "networking",
     status: "active",
-    tags: ["networking", "scanner", "python"],
-    description: "Custom TCP-based network scanning tool for analyzing exposed services and port states.",
+    tags: ["networking", "scanner", "python", "asyncio"],
+    description: "Async TCP full-port scanner (1-65535) with banner grabbing and CSV export.",
     github: "",
     demo: "/assets/tcp_full_scan.mp4",
     image: "/assets/tcp_full_scan.png",
-    runCommand: "$ python3 tcp_scan.py 10.0.0.5 1-1024",
+    runCommand: "$ python3 tcp_full_scan.py example.com --concurrency 500",
     runOutput: [
-      "[*] Target: 10.0.0.5  ports 1-1024",
-      "[*] Threads: 200  timeout: 1.0s",
-      "[+] 22/tcp   open    ssh",
-      "[+] 80/tcp   open    http",
-      "[+] 443/tcp  open    https",
-      "[+] 3306/tcp open    mysql",
-      "[*] Scan complete in 4.2s — 4 open / 1020 filtered",
+      "Scanning example.com (93.184.216.34) ports 1-65535 with concurrency=500, timeout=1.0",
+      "[+] progress: 1000/65535 ports checked...",
+      "[+] progress: 5000/65535 ports checked...",
+      "",
+      "Open ports on example.com:",
+      "  PORT  SERVICE/BANNER",
+      "------------------------------------------------------------",
+      "    22  ssh",
+      "    80  HTTP/1.1 200 OK",
+      "   443  https",
+      "",
+      "Scan finished in 142.3 seconds.",
     ],
     files: [
       {
@@ -812,51 +815,266 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         lang: "md",
         content: `# TCP Full Scan
 
-Threaded TCP full-connect scanner. Built to learn the wire — no nmap.
+Async TCP full-port scanner (1-65535) with banner grabbing and CSV export.
+
+## Features
+- asyncio-based concurrency (default 500 tasks)
+- Banner grabbing with timeout
+- Well-known service name fallback
+- Optional CSV output
+- Progress updates to stderr
 
 ## Usage
 \`\`\`
-python3 tcp_scan.py <target> <start-end>
+python3 tcp_full_scan.py example.com
+python3 tcp_full_scan.py 192.168.1.10 --concurrency 500 --timeout 1.0 --csv results.csv
 \`\`\`
-
-Demonstrates:
-- raw socket connect()
-- thread-pool concurrency
-- timeout / banner grabbing
 `,
       },
       {
-        name: "tcp_scan.py",
+        name: "tcp_full_scan.py",
         lang: "py",
-        content: `import socket, sys
-from concurrent.futures import ThreadPoolExecutor
+        content: `#!/usr/bin/env python3
+"""
+tcp_full_scan.py
+Scan TCP ports 1..65535 on a target, print only open ports and a best-effort service/banner.
+This is the simple, single-attempt version with optional CSV output.
 
-def probe(host, port, timeout=1.0):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(timeout)
+Usage:
+python tcp_full_scan.py example.com
+python tcp_full_scan.py 192.168.1.10 --concurrency 500 --timeout 1.0 --csv results.csv
+"""
+import asyncio
+import socket
+import argparse
+import csv
+import sys
+from datetime import datetime
+from typing import Tuple, Optional, List
+
+DEFAULT_CONCURRENCY = 500
+DEFAULT_TIMEOUT = 1.0  # seconds
+
+async def probe_port(host: str, port: int, timeout: float) -> Optional[Tuple[int, str]]:
+    """
+    Try to connect to (host,port). If open, try to read a banner (non-blocking via asyncio).
+    Return (port, banner_or_service_name) on success, else None.
+    """
     try:
-        s.connect((host, port))
-        try: banner = s.recv(64).decode(errors="ignore").strip()
-        except Exception: banner = ""
-        return port, True, banner
-    except Exception:
-        return port, False, ""
-    finally:
-        s.close()
+        reader, writer = await asyncio.wait_for(
+            asyncio.open_connection(host, port), timeout=timeout
+        )
+    except (asyncio.TimeoutError, ConnectionRefusedError, OSError):
+        return None
 
-def main(host, lo, hi):
-    open_ports = []
-    with ThreadPoolExecutor(max_workers=200) as ex:
-        for port, ok, banner in ex.map(lambda p: probe(host, p), range(lo, hi+1)):
-            if ok:
-                open_ports.append((port, banner))
-                print(f"[+] {port}/tcp open  {banner}")
-    print(f"[*] {len(open_ports)} open")
+    banner = ""
+    try:
+        # Try to read a small banner (not sending data). Many services send something on connect.
+        data = await asyncio.wait_for(reader.read(1024), timeout=0.8)
+        if data:
+            try:
+                banner = data.decode(errors="ignore").strip().splitlines()[0]
+            except Exception:
+                banner = repr(data)[:200]
+    except asyncio.TimeoutError:
+        # no banner within short time — ignore
+        pass
+    except Exception:
+        pass
+    finally:
+        try:
+            writer.close()
+            await writer.wait_closed()
+        except Exception:
+            pass
+
+    if banner:
+        return port, banner
+    # fallback to well-known service name
+    try:
+        svc = socket.getservbyport(port, "tcp")
+    except OSError:
+        svc = "unknown"
+    return port, svc
+
+async def scanner(host: str, ports: range, concurrency: int, timeout: float) -> List[Tuple[int, str]]:
+    """
+    Manages concurrent probing of ports using an asyncio Semaphore.
+    """
+    sem = asyncio.Semaphore(concurrency)
+
+    async def sem_probe(p: int):
+        async with sem:
+            return await probe_port(host, p, timeout)
+
+    tasks = [asyncio.create_task(sem_probe(p)) for p in ports]
+    results = []
+    total = len(tasks)
+    last_print = datetime.now()
+    for i, t in enumerate(asyncio.as_completed(tasks), 1):
+        res = await t
+        if res:
+            results.append(res)
+        # occasional status update to stderr (every ~2 seconds)
+        if (datetime.now() - last_print).total_seconds() > 2:
+            # Using sys.stderr for status updates
+            print(f"[+] progress: {i}/{total} ports checked...", file=sys.stderr, flush=True)
+            last_print = datetime.now()
+
+    # sort by port
+    results.sort(key=lambda x: x[0])
+    return results
+
+def parse_args() -> argparse.Namespace:
+    """Parses command line arguments."""
+    p = argparse.ArgumentParser(description="Async TCP full-port scanner (1-65535).")
+    p.add_argument("target", help="Target hostname or IP")
+    p.add_argument("--start", type=int, default=1, help="Start port (default 1)")
+    p.add_argument("--end", type=int, default=65535, help="End port (default 65535)")
+    p.add_argument("--concurrency", type=int, default=DEFAULT_CONCURRENCY,
+                   help=f"Concurrent tasks (default {DEFAULT_CONCURRENCY})")
+    p.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT,
+                   help=f"Connect/read timeout in seconds (default {DEFAULT_TIMEOUT})")
+    p.add_argument("--csv", type=str, default=None, help="Write results to CSV file")
+    return p.parse_args()
+
+def print_results(target: str, results: List[Tuple[int, str]]):
+    """Prints the final scan results to stdout."""
+    if not results:
+        print(f"No open TCP ports found on {target}.")
+        return
+
+    print(f"\\nOpen ports on {target}:")
+    print(f"{'PORT':>6}  SERVICE/BANNER")
+    print("-" * 60)
+    for port, svc in results:
+        print(f"{port:6}  {svc}")
+
+def write_csv(path: str, target: str, results: List[Tuple[int, str]]):
+    """Writes the scan results to a CSV file."""
+    try:
+        with open(path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["target", "port", "service_or_banner"])
+            for port, svc in results:
+                writer.writerow([target, port, svc])
+        print(f"CSV written to {path}")
+    except IOError as e:
+        print(f"[E] Error writing CSV file to {path}: {e}", file=sys.stderr)
+
+def resolve_target(t: str) -> str:
+    """Resolves a hostname to an IP address."""
+    try:
+        return socket.gethostbyname(t)
+    except socket.gaierror as e:
+        raise SystemExit(f"Error resolving target '{t}': {e}")
+
+def main():
+    """Main function to run the port scanner."""
+    args = parse_args()
+    target = args.target
+    ip = resolve_target(target)
+    start = max(1, args.start)
+    end = min(65535, args.end)
+    if start > end:
+        raise SystemExit("start port must be <= end port")
+
+    ports = range(start, end + 1)
+    print(f"Scanning {target} ({ip}) ports {start}-{end} with concurrency={args.concurrency}, timeout={args.timeout}")
+    t0 = datetime.now()
+
+    try:
+        results = asyncio.run(scanner(ip, ports, args.concurrency, args.timeout))
+    except KeyboardInterrupt:
+        print("\\nScan interrupted by user.")
+        results = []
+
+    t1 = datetime.now()
+    dur = (t1 - t0).total_seconds()
+    print(f"\\nScan finished in {dur:.1f} seconds.")
+
+    print_results(target, results)
+    if args.csv:
+        write_csv(args.csv, target, results)
 
 if __name__ == "__main__":
-    host = sys.argv[1]
-    lo, hi = map(int, sys.argv[2].split("-"))
-    main(host, lo, hi)
+    main()
+`,
+      },
+    ],
+  },
+  {
+    id: "vehicle",
+    name: "Smart Recon Vehicle",
+    domain: "embedded",
+    status: "archived",
+    tags: ["embedded", "bluetooth", "arduino"],
+    description: "A smart vehicle combining embedded systems, automation, and remote Bluetooth control.",
+    github: "https://github.com/youssefsalama-11/Smart-Car-Project/blob/main/Smart_Car.ino",
+    demo: "",
+    image: "/assets/smart.jpeg",
+    runCommand: "$ avrdude -p atmega328p -U flash:w:Smart_Car.hex",
+    runOutput: [
+      "[*] Compiling Smart_Car.ino ...",
+      "[*] AVR-GCC: OK  (program: 6,820 bytes)",
+      "[*] Uploading via /dev/ttyUSB0 @ 57600",
+      "[+] Flash verified ✓",
+      "[*] HC-05 paired · ready for AT commands",
+    ],
+    files: [
+      {
+        name: "README.md",
+        lang: "md",
+        content: `# Smart Recon Vehicle
+
+Bluetooth-controlled rover with motor-driver IC and laptop-side telemetry.
+
+## Stack
+- ATmega328P (Arduino)
+- L298N motor driver, 4× DC motors
+- HC-05 Bluetooth
+- Serial telemetry → Python listener
+
+## Lessons
+- PWM tuning for differential drive
+- Bluetooth latency vs UART throughput trade-offs
+`,
+      },
+      {
+        name: "Smart_Car.ino",
+        lang: "ino",
+        content: `// Smart_Car.ino — Bluetooth-controlled rover
+#include <SoftwareSerial.h>
+
+const int IN1=2, IN2=3, IN3=4, IN4=5, ENA=9, ENB=10;
+SoftwareSerial bt(11, 12); // RX, TX (HC-05)
+
+void drive(int l, int r) {
+  digitalWrite(IN1, l>0); digitalWrite(IN2, l<0);
+  digitalWrite(IN3, r>0); digitalWrite(IN4, r<0);
+  analogWrite(ENA, abs(l));
+  analogWrite(ENB, abs(r));
+}
+
+void setup() {
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  bt.begin(9600); Serial.begin(9600);
+}
+
+void loop() {
+  if (bt.available()) {
+    char c = bt.read();
+    switch (c) {
+      case 'F': drive( 200,  200); break;
+      case 'B': drive(-200, -200); break;
+      case 'L': drive(-180,  180); break;
+      case 'R': drive( 180, -180); break;
+      case 'S': drive(   0,    0); break;
+    }
+    Serial.println(c);
+  }
+}
 `,
       },
     ],
@@ -904,8 +1122,7 @@ Real-time face detection + dynamic blurring on live webcam feed with audio recor
       {
         name: "face-blur.py",
         lang: "py",
-        content: `
-import cv2
+        content: `import cv2
 import mediapipe as mp
 import numpy as np
 import sounddevice as sd
@@ -1004,82 +1221,6 @@ subprocess.run([
 ])
 
 print(f"✅ Done! Output saved to {final_file}")
-,
-      },
-    ],
-  },
-  {
-    id: "vehicle",
-    name: "Smart Recon Vehicle",
-    domain: "embedded",
-    status: "archived",
-    tags: ["embedded", "bluetooth", "arduino"],
-    description: "A smart vehicle combining embedded systems, automation, and remote Bluetooth control.",
-    github: "https://github.com/youssefsalama-11/Smart-Car-Project/blob/main/Smart_Car.ino",
-    demo: "",
-    image: "/assets/smart.jpeg",
-    runCommand: "$ avrdude -p atmega328p -U flash:w:Smart_Car.hex",
-    runOutput: [
-      "[*] Compiling Smart_Car.ino ...",
-      "[*] AVR-GCC: OK  (program: 6,820 bytes)",
-      "[*] Uploading via /dev/ttyUSB0 @ 57600",
-      "[+] Flash verified ✓",
-      "[*] HC-05 paired · ready for AT commands",
-    ],
-    files: [
-      {
-        name: "README.md",
-        lang: "md",
-        content: `# Smart Recon Vehicle
-
-Bluetooth-controlled rover with motor-driver IC and laptop-side telemetry.
-
-## Stack
-- ATmega328P (Arduino)
-- L298N motor driver, 4× DC motors
-- HC-05 Bluetooth
-- Serial telemetry → Python listener
-
-## Lessons
-- PWM tuning for differential drive
-- Bluetooth latency vs UART throughput trade-offs
-`,
-      },
-      {
-        name: "Smart_Car.ino",
-        lang: "ino",
-        content: `// Smart_Car.ino — Bluetooth-controlled rover
-#include <SoftwareSerial.h>
-
-const int IN1=2, IN2=3, IN3=4, IN4=5, ENA=9, ENB=10;
-SoftwareSerial bt(11, 12); // RX, TX (HC-05)
-
-void drive(int l, int r) {
-  digitalWrite(IN1, l>0); digitalWrite(IN2, l<0);
-  digitalWrite(IN3, r>0); digitalWrite(IN4, r<0);
-  analogWrite(ENA, abs(l));
-  analogWrite(ENB, abs(r));
-}
-
-void setup() {
-  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
-  bt.begin(9600); Serial.begin(9600);
-}
-
-void loop() {
-  if (bt.available()) {
-    char c = bt.read();
-    switch (c) {
-      case 'F': drive( 200,  200); break;
-      case 'B': drive(-200, -200); break;
-      case 'L': drive(-180,  180); break;
-      case 'R': drive( 180, -180); break;
-      case 'S': drive(   0,    0); break;
-    }
-    Serial.println(c);
-  }
-}
 `,
       },
     ],
@@ -1206,8 +1347,7 @@ Professional GUI for downloading TikTok videos without watermark or ads.
       {
         name: "tiktok_downloader_pro.py",
         lang: "py",
-        content: `
-#!/usr/bin/env python3
+        content: `#!/usr/bin/env python3
 """
 TikTok Video Downloader Pro (Personal Use)
 -------------------------------------------
@@ -1480,7 +1620,7 @@ class TikTokDownloader(ctk.CTk):
 
 if __name__ == "__main__":
     app = TikTokDownloader()
-    app.mainloop(),
+    app.mainloop()`,
       },
     ],
   },
