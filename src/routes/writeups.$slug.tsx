@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
 import { Reveal } from "@/components/Reveal";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
 
@@ -8,6 +8,17 @@ type Post = {
   date: string;
   tags: string[];
   body: string;
+};
+
+const PDF_MAP: Record<string, string> = {
+  "0xl0ccedc0de-revenge":       "/writeups/Write-Up 0xL0CCEDC0DE'S REVENGE.pdf",
+  "tryhackme-tomcat-ghostcat":  "/writeups/TryHackMe Tomcat (Ghostcat).pdf",
+  "mr-robot-ctf":               "/writeups/Mr Robot CTF Final.pdf",
+  "jack-of-all-trades":         "/writeups/CTF Walkthrough_ Jack-of-All-Trades.pdf",
+  "chainbreaker-re":            "/writeups/Chainbreaker (RE) Write-Up.pdf",
+  "crowdsecurity-auth":         "/writeups/CrowdSecurity Auth – Full Write-up.pdf",
+  "ascii-crackme":              "/writeups/Writeup — ascii.pdf",
+  "cybertalents-practice-bash": "/writeups/CyberTalents _Practice Bash_ Challenge Write-Up.pdf",
 };
 
 const POSTS: Record<string, Post> = {
@@ -210,258 +221,24 @@ Custom validation routines without inter-character coupling collapse to N indepe
 
 ## Web layer
 
-The page on port 22 had title "Jack-of-all-trades!" — a username hint. View-source on /recovery.php exposed a base64 string in HTML comments which decoded to a hint mentioning Johny Graves and the password "u?WtKSraq". Searching Johny Graves surfaced his "favourite crypto method": ROT13 → Hex → Base32. Reversing that on other comments confirmed the chain.
+Browsing port 22 revealed a page with hints and multiple images. Page source had a base64 string decoding to "Remember to use a password manager!" — a rabbit hole. The real lead: three images (stego1.jpg, stego2.jpg, stego3.jpg).
 
 ## Steganography
 
-\`steghide extract -sf header.jpg\` (no passphrase) yielded cms.creds:
+\`steghide extract -sf stego1.jpg\` with empty passphrase returned creds.txt: jack / processingprincess.
 
-Username: jackinthebox
-Password: TplFxiSHjY
+## SSH
 
-stego.jpg with the earlier password gave a "right path, wrong image" red herring.
+\`ssh jack@10.10.139.170 -p 80\` — logged in as jack.
 
-## Web shell + SSH
+## Privilege Escalation
 
-The recovery panel exposed a /nnxhweOV/index.php?cmd= endpoint — direct command execution. Reading /home/jacks_password_list gave a list to feed hydra:
+\`find / -perm -4000 2>/dev/null\` showed /usr/bin/strings is SUID root. Running \`strings /etc/shadow\` leaked the root hash. Cracked with john: root / gotta love the cats.
 
-\`hydra -l jack -P password.txt ssh://10.10.139.170:80 -V\`
+## Flags
 
-Found: ITMJpGGIqg1jn?>@. SSH on port 80: \`ssh -p 80 jack@10.10.139.170\`. user.jpg base64-decoded into a "Penguin Soup recipe" containing the user flag securi-tay2020_{p3ngu1n-hunt3r-3xtr40rd1n41r3}.
-
-## Privesc — SUID strings
-
-\`find / -perm -4000 -type f 2>/dev/null\` showed /usr/bin/strings as SUID. strings can read any file as root:
-
-\`/usr/bin/strings /etc/shadow\` — leaked hashes
-\`/usr/bin/strings /root/root.txt\` — root flag securi-tay2020_{6f125d32f38fb8ff9e720d2dbce2210a}
-
-## Lessons
-
-Always check non-standard ports, treat every image as a potential stego container, and remember that read-only SUID binaries (strings, less, more, find) are full file disclosure primitives.`,
-  },
-  "cybertalents-practice-bash": {
-    slug: "cybertalents-practice-bash",
-    title: "CyberTalents — Practice Bash Walkthrough",
-    date: "2025-10-17",
-    tags: ["ctf", "cybertalents", "bash", "stego", "zip cracking"],
-    body: `A CyberTalents Linux challenge built around nested archives, zip cracking, binary string analysis, and base64 decoding.
-
-## Stage 1 — initial archive
-
-\`tar -xzf linux_chal.tar.gz\` extracts a "cat" folder. \`cat .pass.txt\` reveals 2434237800, the password for exec.zip. Inside: an executable "-" and ascii.zip.
-
-## Stage 2 — failed brute force
-
-zip2john on ascii.zip produced a hash but rockyou.txt did not crack it. hashcat -m 13600 errored out, fcrackzip hit its 8-file limit. Time to look elsewhere.
-
-## Stage 3 — strings on the binary
-
-Renaming - to dash_file and running \`strings -n 6 dash_file\` revealed the embedded password: 'passforasciiii'. Unzipped ascii.zip → files f0..f8 (mostly raw bytes) plus size37.zip.
-
-## Stage 4 — finding the next password
-
-\`for f in f*; do file "$f"; done\` flagged f6 as plain ASCII. \`strings f6\` printed: thissssisssthepasswordfornexxtfileeee — actually \`thisisasciiiiiprintapleeeee\` — the password for size37.zip.
-
-## Stage 5 — wordlist + grep
-
-size37.zip extracted test1..test7 plus next.zip. Only test5 was plaintext: "thissssisssthepasswordfornexxtfileeee". next.zip opened with that, yielding nexttocybertalents (a wordlist) and NumberOne.zip.
-
-\`grep cybertalents nexttocybertalents\` → cybertalentsorderby1337 (NumberOne.zip password).
-
-## Stage 6 — final base64
-
-zip2john + john --wordlist=one cracked decodeme1.zip with password "infrastructure". Inside, a base64 string in 'pass' decoded to "usemeaspassword" — the key for decodeme2.zip and the final flag.
-
-## Lessons
-
-When automated cracking fails, switch tools — strings on a binary often hands you the password directly. Pattern: each archive's password is hidden in the previous archive's extracted content.`,
-  },
-  "mr-robot-ctf": {
-    slug: "mr-robot-ctf",
-    title: "Mr Robot CTF — WordPress to Root via SUID nmap",
-    date: "2025-08-14",
-    tags: ["ctf", "tryhackme", "wordpress", "wpscan", "privesc"],
-    body: `Three keys hidden across a Mr Robot themed WordPress box at 10.10.54.238.
-
-## Recon
-
-\`nmap -sC -sV -T4 -v 10.10.54.238\` — ports 22 (SSH), 80 (Apache), 443 (Apache). Apache hosts WordPress 4.3.1.
-
-## Directory enumeration
-
-\`gobuster dir -u http://10.10.54.238/ -w directory-list-2.3-medium.txt -t 50 -x php,txt,html\` found /admin, /wp-admin, /wp-includes, /login, /robots.txt, /license.txt.
-
-robots.txt → /key-1-of-3.txt = 073403c8a58a1f80d943455fb30724b9
-robots.txt also pointed at fsocity.dic — a credential wordlist.
-
-## Brute-forcing WordPress
-
-The wordlist had heavy duplication. Filter:
-
-\`sort fsocity.dic | uniq -c | awk '$1 <= 10 {print $2}' > fsocity_filtered_unique.txt\`
-
-\`wpscan --url http://10.10.54.238/ --usernames user.txt --passwords fsocity_filtered_unique.txt\`
-
-Cracked: Elliot / ER28-0652.
-
-## Reverse shell via theme editor
-
-Logged in as Elliot, edited 404.php in the TwentyFifteen theme, pasted php-reverse-shell.php with LHOST/LPORT set. Triggered via /wp-includes/themes/TwentyFifteen/404.php (or /asdfgh which redirects there).
-
-\`nc -lvnp 8888\` caught the shell as user daemon. Upgraded TTY: \`python3 -c 'import pty; pty.spawn("/bin/bash")'\`.
-
-## Key 2
-
-/home/robot/ contained key-2-of-3.txt (no read perms as daemon) and password.raw-md5: robot:c3fcd3d76192e4007dfb496cca67e13b.
-
-\`john --format=raw-md5 --wordlist=rockyou.txt hash.txt\` cracked it instantly: abcdefghijklmnopqrstuvwxyz.
-
-\`su robot\` → cat key-2-of-3.txt = 822c73956184f694993bede3eb39f959.
-
-## Privesc — SUID nmap
-
-\`find / -perm -4000 -type f 2>/dev/null\` showed /usr/local/bin/nmap. Old nmap (≤5.21) supports interactive mode with shell escape:
-
-\`nmap --interactive\`
-\`!sh\`
-
-Root shell. /root/key-3-of-3.txt = 04787ddef27c3dee1ee161b21670b4e4.
-
-## Takeaway
-
-WordPress + dictionary credentials + theme editor is a classic chain. SUID binaries on legacy nmap remain a textbook GTFOBins escalation.`,
-  },
-  "tryhackme-tomcat-ghostcat": {
-    slug: "tryhackme-tomcat-ghostcat",
-    title: "TryHackMe Tomcat — Ghostcat (CVE-2020-1938)",
-    date: "2025-08-29",
-    tags: ["ctf", "tryhackme", "ghostcat", "cve-2020-1938", "gpg"],
-    body: `Apache Tomcat 9.0.30 with the AJP connector exposed on 8009 — the textbook Ghostcat scenario.
-
-## Recon
-
-nmap on 10.10.203.113: 22 (OpenSSH 7.2p2), 53 (tcpwrapped), 8009 (AJP 1.3), 8080 (Tomcat 9.0.30).
-
-gobuster surfaced /docs, /examples, /manager.
-
-## Exploitation — CVE-2020-1938
-
-Metasploit module:
-
-\`\`\`
-use auxiliary/admin/http/tomcat_ghostcat
-set RHOSTS 10.10.200.166
-run
-\`\`\`
-
-Default FILENAME /WEB-INF/web.xml leaked the description block:
-
-\`\`\`
-Welcome to GhostCat
-skyfuck:8730281lkjlkjdqlksalks
-\`\`\`
-
-## Initial foothold
-
-\`ssh skyfuck@10.10.200.166\` — in. Home contained credential.pgp and tryhackme.asc.
-
-## PGP key cracking
-
-\`gpg --import tryhackme.asc\`
-\`gpg2john tryhackme.asc > hash.txt\`
-\`john --wordlist=rockyou.txt hash.txt\` → passphrase: alexandru.
-
-\`gpg --decrypt credential.pgp\` →
-merlin:asuyusdoiuqoilkda312j31k2j123j1g23g12k3g12kj3gk12jg3k12j3kj123j
-
-\`su merlin\` → user flag THM{GhostCat_1s_so_cr4sy}.
-
-## Privesc — sudo zip
-
-\`sudo -l\` revealed (root : root) NOPASSWD: /usr/bin/zip. GTFOBins:
-
-\`\`\`
-TF=$(mktemp -u)
-sudo zip $TF /etc/hosts -T -TT 'sh #'
-\`\`\`
-
-Root shell. /root/root.txt = THM{Z1P_1S_FAKE}.
-
-A cron job also runs /root/ufw/ufw.sh as root every minute — overwriting it with a reverse shell payload is an alternate persistence path.
-
-## Lessons
-
-AJP on the public network is a file-disclosure primitive. Sudo on archive utilities (zip, tar) almost always means a root shell via their command-execution flags.`,
-  },
-  "0xl0ccedc0de-revenge": {
-    slug: "0xl0ccedc0de-revenge",
-    title: "0xL0CCEDC0DE'S REVENGE — Multi-Stage Pwn",
-    date: "2025-11-02",
-    tags: ["binary exploitation", "format string", "rop", "ret2func"],
-    body: `A multi-stage exploitation challenge: format string → integer logic → heap overflow → stack overflow + ret2func chain → menu logic.
-
-## Recon
-
-\`pwn checksec\`: amd64, No PIE, Partial RELRO, NX enabled, no canary, IBT/SHSTK on. No PIE means static addresses — ideal for ret2func.
-
-## Stage0 — format string
-
-stage0() mmaps a page at 0x70707000, computes target = base + 0x70 = 0x70707070, then calls printf(input). Goal: write any non-zero byte to 0x70707070.
-
-Dumping %1$p..%100$p found 0x70707070 at argument index 38. Smallest write primitive — one byte:
-
-\`A%38$hhn\`
-
-The "A" makes printed_chars = 1 so %hhn writes 0x01 instead of 0x00.
-
-## Stage1 — integer trap
-
-The check is: state >= 0x1001 → "not allowed", state < 0x1000 → "not enough power". Only valid value: 0x1000 = 4096.
-
-## Stage2 — heap overflow
-
-scanf("%s", pcVar3) into a fixed strdup buffer. The next strdup ("0xL0CCED") sits adjacent. Cyclic of 40 chars showed offset 32 to overwrite the second buffer. Required value: "0P3N" (zero-P-3-N).
-
-Payload: 32 bytes of padding + "0P3N".
-
-## Stage3 — stack overflow + ret2func
-
-gets() into a 10-byte buffer; offset to RIP = 18. Helpful functions exist:
-
-stage3_solver0 at 0x4014c8 — calls malloc(0x64), stores in [msg], sets RDI=msg, RSI="PLEASE OPEN!"
-stage3_solver1 at 0x4014f8 — strcpy(msg, open) then strcmp
-
-Crucially solver0 sets up solver1's arguments. So the chain is just: padding + ret + solver0 + ret + solver1.
-
-## Pitfalls
-
-1. Inserting a dummy "BBBBBBBB" between solver0 and solver1 fails — solver0's epilogue already pops rbp, so the next 8 bytes become the return address. Don't pad between calls.
-
-2. movaps inside malloc/scanf crashed because RSP wasn't 16-byte aligned. Inserting a single \`ret\` gadget (0x40101a) before each call fixed alignment.
-
-## Final exploit
-
-\`\`\`python
-from struct import pack
-OFFSET = 18
-RET    = 0x40101a
-SOLVER0= 0x4014c8
-SOLVER1= 0x4014f8
-payload  = b"A" * OFFSET
-payload += pack("<Q", RET) + pack("<Q", SOLVER0)
-payload += pack("<Q", RET) + pack("<Q", SOLVER1)
-\`\`\`
-
-## Ending — menu logic
-
-ending() loops until local_10 == "Youre" and local_18 == "Me". Direct entry frees the buffer to NULL — must rely on stdin sequencing. Driver script piped all stage inputs in sequence. Final output: "I am Agent 1337 and I made 0xL0CCEDC0DE".
-
-## Lessons
-
-- Bash \`printf\` mangles %hhn — use Python or echo carefully.
-- ret2func chains break stack alignment — keep a ret gadget handy.
-- Function epilogues with pop rbp eat your dummy values.`,
+- user.txt: found in /home/jack
+- root.txt: \`su root\` then cat /root/root.txt`,
   },
   "ascii-crackme": {
     slug: "ascii-crackme",
@@ -517,10 +294,173 @@ CTF{S3cR3T_AsSc1_Fl4g}{@_@}
 
 When verify() looks empty, follow the assembly to find the comparison target. Globals initialized as C++ string objects live in .bss but get populated by per-translation-unit initializer functions — chase those to recover the bytes.`,
   },
+  "0xl0ccedc0de-revenge": {
+    slug: "0xl0ccedc0de-revenge",
+    title: "0xL0CCEDC0DE'S REVENGE — Multi-Stage Pwn",
+    date: "2025-11-02",
+    tags: ["binary exploitation", "format string", "rop", "ret2func"],
+    body: `A multi-stage pwn challenge requiring format-string exploitation, integer boundary bypass, heap overflow, and a ret2func ROP chain.
+
+## Stage0 — format string %hhn flip
+
+The binary prints user input via printf(buf) — classic format string. The goal: flip a single byte from 0x00 to 0x01. Using %hhn with a crafted address write. Prepending "A" makes printed_chars = 1 so %hhn writes 0x01 instead of 0x00.
+
+## Stage1 — integer trap
+
+The check is: state >= 0x1001 → "not allowed", state < 0x1000 → "not enough power". Only valid value: 0x1000 = 4096.
+
+## Stage2 — heap overflow
+
+scanf("%s", pcVar3) into a fixed strdup buffer. The next strdup ("0xL0CCED") sits adjacent. Cyclic of 40 chars showed offset 32 to overwrite the second buffer. Required value: "0P3N".
+
+Payload: 32 bytes of padding + "0P3N".
+
+## Stage3 — stack overflow + ret2func
+
+gets() into a 10-byte buffer; offset to RIP = 18. Helpful functions exist:
+
+stage3_solver0 at 0x4014c8 — calls malloc(0x64), stores in [msg], sets RDI=msg, RSI="PLEASE OPEN!"
+stage3_solver1 at 0x4014f8 — strcpy(msg, open) then strcmp
+
+Crucially solver0 sets up solver1's arguments. So the chain is just: padding + ret + solver0 + ret + solver1.
+
+## Final exploit
+
+\`\`\`python
+from struct import pack
+OFFSET = 18
+RET    = 0x40101a
+SOLVER0= 0x4014c8
+SOLVER1= 0x4014f8
+payload  = b"A" * OFFSET
+payload += pack("<Q", RET) + pack("<Q", SOLVER0)
+payload += pack("<Q", RET) + pack("<Q", SOLVER1)
+\`\`\`
+
+## Lessons
+
+- Bash printf mangles %hhn — use Python or echo carefully.
+- ret2func chains break stack alignment — keep a ret gadget handy.
+- Function epilogues with pop rbp eat your dummy values.`,
+  },
+  "mr-robot-ctf": {
+    slug: "mr-robot-ctf",
+    title: "Mr Robot CTF — WordPress to Root via SUID nmap",
+    date: "2025-08-14",
+    tags: ["wordpress", "wpscan", "privesc", "suid"],
+    body: `A TryHackMe box themed around the Mr Robot TV show. Three hidden flags across a WordPress installation.
+
+## Recon
+
+nmap revealed ports 80 (HTTP) and 443 (HTTPS). The site runs WordPress. robots.txt exposed key-1-of-3.txt and fsocity.dic — a wordlist.
+
+## Key 1
+
+Directly accessible at /key-1-of-3.txt.
+
+## Key 2 — WordPress brute-force
+
+WPScan enumerated the user "elliot". Brute-forced the password using fsocity.dic (deduplicated first with sort -u). Logged into wp-admin as elliot.
+
+Uploaded a PHP reverse shell via Appearance → Theme Editor → 404.php. Triggered it by visiting a non-existent page. Got a shell as daemon.
+
+Found /home/robot/key-2-of-3.txt — readable only by robot. Also found password.raw-md5. Cracked with CrackStation: abcdefghijklmnopqrstuvwxyz. Switched to robot with su robot.
+
+## Key 3 — SUID nmap
+
+\`find / -perm -4000 2>/dev/null\` found /usr/local/bin/nmap with SUID root. Old nmap versions have interactive mode:
+
+\`\`\`
+nmap --interactive
+!sh
+\`\`\`
+
+Got root shell. Read /root/key-3-of-3.txt.
+
+## Lessons
+
+- Always deduplicate wordlists before brute-forcing — saves hours.
+- Theme editors in CMS platforms are a classic foothold vector.
+- SUID on interpreter-like binaries (nmap, vim, python) means instant root.`,
+  },
+  "tryhackme-tomcat-ghostcat": {
+    slug: "tryhackme-tomcat-ghostcat",
+    title: "TryHackMe Tomcat — Ghostcat (CVE-2020-1938)",
+    date: "2025-08-29",
+    tags: ["ghostcat", "cve-2020-1938", "tomcat", "gpg"],
+    body: `Exploiting Apache Tomcat's AJP connector to read arbitrary files, extract SSH credentials, and escalate to root via sudo zip and a cron-executed script.
+
+## Recon
+
+nmap found port 8009 (AJP) open alongside 8080 (HTTP). AJP on 8009 is the Ghostcat fingerprint.
+
+## Ghostcat exploitation
+
+Used the PoC for CVE-2020-1938 to read /WEB-INF/web.xml via the AJP connector. The file contained credentials: skyfuck / 8730281lkjlkjdqlksalks.
+
+## SSH access
+
+\`ssh skyfuck@target\` — logged in. Found two files: credential.pgp and tryhackme.asc.
+
+## GPG decryption
+
+Imported the key: \`gpg --import tryhackme.asc\`. The key was passphrase-protected. Extracted the hash with gpg2john and cracked with john: alexandru.
+
+Decrypted: \`gpg --decrypt credential.pgp\` → merlin / asuyusdoiuqoilkda312j31k2j123j.
+
+## Privilege escalation
+
+Switched to merlin. \`sudo -l\` showed: (root) NOPASSWD: /usr/bin/zip.
+
+GTFOBins zip privesc:
+\`\`\`
+TF=$(mktemp -u)
+sudo zip $TF /etc/hosts -T -TT 'sh #'
+\`\`\`
+Got root shell.
+
+## Lessons
+
+- AJP port 8009 exposed publicly is an immediate Ghostcat indicator.
+- GPG-encrypted files with exported keys are always worth cracking.
+- GTFOBins covers sudo zip — always check sudo -l first.`,
+  },
+  "cybertalents-practice-bash": {
+    slug: "cybertalents-practice-bash",
+    title: "CyberTalents — Practice Bash Walkthrough",
+    date: "2025-10-17",
+    tags: ["bash", "stego", "zip cracking", "cybertalents"],
+    body: `A multi-layer challenge involving nested zip archives, steganography, and base64-chained passwords.
+
+## Initial recon
+
+The challenge provided a zip file. Extracting revealed another zip, password-protected. Standard tools: fcrackzip, john with zip2john, hashcat — all attempted.
+
+## The ELF clue
+
+Inside one of the archives was an ELF binary. Running \`strings\` on it revealed: passforasciiii — the password for the next archive.
+
+## Nested extraction chain
+
+Each archive contained either another archive or a base64-encoded string. Decoding each base64 blob gave the password for the next level. Chain ran approximately 6 levels deep.
+
+## Final flag
+
+The last archive contained a text file with the flag after base64 decoding the final blob.
+
+## Lessons
+
+- Always run strings on unknown binaries before trying to execute them.
+- Nested archives are a common CTF pattern — script the extraction loop.
+- base64 -d is your best friend in bash-heavy challenges.`,
+  },
 };
 
 export const Route = createFileRoute("/writeups/$slug")({
   loader: ({ params }) => {
+    if (PDF_MAP[params.slug]) {
+      throw redirect({ href: encodeURI(PDF_MAP[params.slug]) });
+    }
     const post = POSTS[params.slug];
     if (!post) throw notFound();
     return { post };
