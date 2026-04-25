@@ -163,6 +163,12 @@ function ContactPage() {
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (!href.startsWith("mailto:")) {
+                        e.preventDefault();
+                        window.open(href, "_blank", "noopener,noreferrer");
+                      }
+                    }}
                     className="group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted"
                   >
                     <span className="grid h-9 w-9 place-items-center rounded-md text-cyber-cyan glass-panel gradient-border transition-shadow group-hover:shadow-[0_0_20px_oklch(0.85_0.18_200/0.5)]">
