@@ -35,7 +35,7 @@ const POSTS: {
   cvss: string;
   classification: string;
   trkId: string;
-  pdfUrl: string; // ← جديد
+  pdfUrl: string | null; // null = PDF مش موجود لسه
 }[] = [
   {
     slug: "snapchat-smtp-open-relay",
@@ -48,7 +48,7 @@ const POSTS: {
     cvss: "8.1",
     classification: "BUG-BOUNTY",
     trkId: "TIB-2025-001",
-    pdfUrl: "/writeups/snapchat-smtp-open-relay.pdf",
+    pdfUrl: null, // ← لسه مرفوعش
   },
   {
     slug: "0xl0ccedc0de-revenge",
@@ -61,7 +61,7 @@ const POSTS: {
     cvss: "9.8",
     classification: "CTF / PWN",
     trkId: "TIB-2025-002",
-    pdfUrl: "/writeups/0xl0ccedc0de-revenge.pdf",
+    pdfUrl: "/writeups/Write-Up 0xL0CCEDC0DE'S REVENGE.pdf",
   },
   {
     slug: "tryhackme-tomcat-ghostcat",
@@ -74,7 +74,7 @@ const POSTS: {
     cvss: "9.1",
     classification: "CTF / WEB",
     trkId: "TIB-2025-003",
-    pdfUrl: "/writeups/tryhackme-tomcat-ghostcat.pdf",
+    pdfUrl: "/writeups/TryHackMe Tomcat (Ghostcat).pdf",
   },
   {
     slug: "mr-robot-ctf",
@@ -87,7 +87,7 @@ const POSTS: {
     cvss: "8.6",
     classification: "CTF / WEB",
     trkId: "TIB-2025-004",
-    pdfUrl: "/writeups/mr-robot-ctf.pdf",
+    pdfUrl: "/writeups/Mr Robot CTF Final.pdf",
   },
   {
     slug: "jack-of-all-trades",
@@ -100,7 +100,7 @@ const POSTS: {
     cvss: "7.8",
     classification: "CTF / MULTI",
     trkId: "TIB-2025-005",
-    pdfUrl: "/writeups/jack-of-all-trades.pdf",
+    pdfUrl: "/writeups/CTF Walkthrough_ Jack-of-All-Trades.pdf",
   },
   {
     slug: "chainbreaker-re",
@@ -113,7 +113,7 @@ const POSTS: {
     cvss: "6.4",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-006",
-    pdfUrl: "/writeups/chainbreaker-re.pdf",
+    pdfUrl: "/writeups/Chainbreaker (RE) Write-Up.pdf",
   },
   {
     slug: "crowdsecurity-auth",
@@ -126,7 +126,7 @@ const POSTS: {
     cvss: "6.1",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-007",
-    pdfUrl: "/writeups/crowdsecurity-auth.pdf",
+    pdfUrl: "/writeups/CrowdSecurity Auth – Full Write-up.pdf",
   },
   {
     slug: "ascii-crackme",
@@ -139,7 +139,7 @@ const POSTS: {
     cvss: "5.9",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-008",
-    pdfUrl: "/writeups/ascii-crackme.pdf",
+    pdfUrl: "/writeups/Writeup — ascii.pdf",
   },
   {
     slug: "cybertalents-practice-bash",
@@ -152,7 +152,7 @@ const POSTS: {
     cvss: "4.7",
     classification: "CTF / MISC",
     trkId: "TIB-2025-009",
-    pdfUrl: "/writeups/cybertalents-practice-bash.pdf",
+    pdfUrl: "/writeups/CyberTalents _Practice Bash_ Challenge Write-Up.pdf",
   },
   {
     slug: "tryhackme-three-season-streak",
@@ -165,7 +165,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-010",
-    pdfUrl: "/writeups/tryhackme-three-season-streak.pdf",
+    pdfUrl: null, // ← لسه مرفوعش
   },
   {
     slug: "journey-into-red-teaming",
@@ -178,7 +178,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-011",
-    pdfUrl: "/writeups/journey-into-red-teaming.pdf",
+    pdfUrl: null, // ← لسه مرفوعش
   },
 ];
 
