@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Reveal } from "@/components/Reveal";
 import { AlertTriangle, Calendar, FileWarning, Hash } from "lucide-react";
@@ -180,7 +180,13 @@ const SEV_STYLE: Record<Severity, { bg: string; text: string; ring: string; labe
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number }) {
+  const navigate = useNavigate();
   const sev = SEV_STYLE[post.severity];
+
+  const handleNavigate = () => {
+    navigate({ to: "/writeups/$slug", params: { slug: post.slug } });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -188,12 +194,10 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
       viewport={{ once: true, margin: "-10%" }}
       transition={{ duration: 0.5, ease: EASE, delay: (idx % 4) * 0.05 }}
       whileHover={{ y: -4, boxShadow: "0 20px 40px oklch(0 0 0 / 0.4), 0 0 30px oklch(0.85 0.18 200 / 0.25)" }}
+      className="cursor-pointer"
+      onClick={handleNavigate}
     >
-      <Link
-        to="/writeups/$slug"
-        params={{ slug: post.slug }}
-        className="group relative block overflow-hidden rounded-xl glass-panel gradient-border"
-      >
+      <div className="group relative block overflow-hidden rounded-xl glass-panel gradient-border">
         {/* header strip — like a classified document */}
         <div
           className={`flex items-center justify-between px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] ${sev.bg} ${sev.text} border-b border-white/5`}
@@ -260,7 +264,7 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
         >
           confidential
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
