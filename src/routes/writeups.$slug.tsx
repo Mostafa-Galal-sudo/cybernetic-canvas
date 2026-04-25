@@ -1,4 +1,5 @@
-import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Reveal } from "@/components/Reveal";
 import { ArrowLeft, Calendar, Tag } from "lucide-react";
 
@@ -459,14 +460,14 @@ The last archive contained a text file with the flag after base64 decoding the f
 export const Route = createFileRoute("/writeups/$slug")({
   loader: ({ params }) => {
     if (PDF_MAP[params.slug]) {
-      throw redirect({ href: encodeURI(PDF_MAP[params.slug]) });
+      return { post: null, pdfUrl: encodeURI(PDF_MAP[params.slug]) };
     }
     const post = POSTS[params.slug];
     if (!post) throw notFound();
-    return { post };
+    return { post, pdfUrl: null };
   },
   head: ({ loaderData }) => ({
-    meta: loaderData
+    meta: loaderData?.post
       ? [
           { title: `${loaderData.post.title} — Writeups — Mostafa Galal` },
           { name: "description", content: loaderData.post.body.slice(0, 160) },
@@ -493,7 +494,21 @@ export const Route = createFileRoute("/writeups/$slug")({
 });
 
 function WriteupDetail() {
-  const { post } = Route.useLoaderData();
+  const { post, pdfUrl } = Route.useLoaderData();
+
+  useEffect(() => {
+    if (pdfUrl) {
+      window.location.href = pdfUrl;
+    }
+  }, [pdfUrl]);
+
+  if (pdfUrl) {
+    return (
+      <div className="flex h-screen items-center justify-center font-mono text-xs uppercase tracking-widest text-cyber-cyan">
+        opening briefing...
+      </div>
+    );
+  }
 
   return (
     <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
@@ -509,20 +524,20 @@ function WriteupDetail() {
       <Reveal delay={0.1}>
         <div className="mt-8 flex flex-wrap items-center gap-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
           <span className="inline-flex items-center gap-1">
-            <Calendar className="h-3 w-3" /> {post.date}
+            <Calendar className="h-3 w-3" /> {post!.date}
           </span>
           <span className="inline-flex items-center gap-1 text-cyber-cyan">
-            <Tag className="h-3 w-3" /> {post.tags.join(" / ")}
+            <Tag className="h-3 w-3" /> {post!.tags.join(" / ")}
           </span>
         </div>
         <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl">
-          {post.title}
+          {post!.title}
         </h1>
       </Reveal>
 
       <Reveal delay={0.15}>
         <div className="prose prose-invert mt-10 max-w-none space-y-5 text-foreground/85">
-          {post.body.split("\n\n").map((block: string, i: number) => {
+          {post!.body.split("\n\n").map((block: string, i: number) => {
             if (block.startsWith("## ")) {
               return (
                 <h2
