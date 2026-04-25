@@ -35,6 +35,7 @@ const POSTS: {
   cvss: string;
   classification: string;
   trkId: string;
+  pdfUrl: string; // ← جديد
 }[] = [
   {
     slug: "snapchat-smtp-open-relay",
@@ -47,6 +48,7 @@ const POSTS: {
     cvss: "8.1",
     classification: "BUG-BOUNTY",
     trkId: "TIB-2025-001",
+    pdfUrl: "/writeups/snapchat-smtp-open-relay.pdf",
   },
   {
     slug: "0xl0ccedc0de-revenge",
@@ -59,6 +61,7 @@ const POSTS: {
     cvss: "9.8",
     classification: "CTF / PWN",
     trkId: "TIB-2025-002",
+    pdfUrl: "/writeups/0xl0ccedc0de-revenge.pdf",
   },
   {
     slug: "tryhackme-tomcat-ghostcat",
@@ -71,6 +74,7 @@ const POSTS: {
     cvss: "9.1",
     classification: "CTF / WEB",
     trkId: "TIB-2025-003",
+    pdfUrl: "/writeups/tryhackme-tomcat-ghostcat.pdf",
   },
   {
     slug: "mr-robot-ctf",
@@ -83,6 +87,7 @@ const POSTS: {
     cvss: "8.6",
     classification: "CTF / WEB",
     trkId: "TIB-2025-004",
+    pdfUrl: "/writeups/mr-robot-ctf.pdf",
   },
   {
     slug: "jack-of-all-trades",
@@ -95,6 +100,7 @@ const POSTS: {
     cvss: "7.8",
     classification: "CTF / MULTI",
     trkId: "TIB-2025-005",
+    pdfUrl: "/writeups/jack-of-all-trades.pdf",
   },
   {
     slug: "chainbreaker-re",
@@ -107,6 +113,7 @@ const POSTS: {
     cvss: "6.4",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-006",
+    pdfUrl: "/writeups/chainbreaker-re.pdf",
   },
   {
     slug: "crowdsecurity-auth",
@@ -119,6 +126,7 @@ const POSTS: {
     cvss: "6.1",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-007",
+    pdfUrl: "/writeups/crowdsecurity-auth.pdf",
   },
   {
     slug: "ascii-crackme",
@@ -131,6 +139,7 @@ const POSTS: {
     cvss: "5.9",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-008",
+    pdfUrl: "/writeups/ascii-crackme.pdf",
   },
   {
     slug: "cybertalents-practice-bash",
@@ -143,6 +152,7 @@ const POSTS: {
     cvss: "4.7",
     classification: "CTF / MISC",
     trkId: "TIB-2025-009",
+    pdfUrl: "/writeups/cybertalents-practice-bash.pdf",
   },
   {
     slug: "tryhackme-three-season-streak",
@@ -155,6 +165,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-010",
+    pdfUrl: "/writeups/tryhackme-three-season-streak.pdf",
   },
   {
     slug: "journey-into-red-teaming",
@@ -167,6 +178,7 @@ const POSTS: {
     cvss: "—",
     classification: "JOURNAL",
     trkId: "TIB-2025-011",
+    pdfUrl: "/writeups/journey-into-red-teaming.pdf",
   },
 ];
 
@@ -189,11 +201,14 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
       transition={{ duration: 0.5, ease: EASE, delay: (idx % 4) * 0.05 }}
       whileHover={{ y: -4, boxShadow: "0 20px 40px oklch(0 0 0 / 0.4), 0 0 30px oklch(0.85 0.18 200 / 0.25)" }}
     >
-      <a
-        href={`/writeups/${post.slug}`}
+      {/* ↓ التغيير الوحيد هنا: href → pdfUrl ، target="_blank" */}
+      
+        href={post.pdfUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="group relative block overflow-hidden rounded-xl glass-panel gradient-border"
       >
-        {/* header strip — like a classified document */}
+        {/* header strip */}
         <div
           className={`flex items-center justify-between px-4 py-2 font-mono text-[10px] uppercase tracking-[0.2em] ${sev.bg} ${sev.text} border-b border-white/5`}
         >
@@ -224,7 +239,6 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
             {post.title}
           </h3>
 
-          {/* redacted accent line */}
           <div className="mt-3 flex items-center gap-2">
             <span className="h-2 w-12 rounded-sm bg-foreground/30" />
             <span className="h-2 w-6 rounded-sm bg-foreground/20" />
