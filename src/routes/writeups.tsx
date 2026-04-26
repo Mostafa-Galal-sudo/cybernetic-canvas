@@ -61,7 +61,7 @@ const POSTS: {
     cvss: "9.8",
     classification: "CTF / PWN",
     trkId: "TIB-2025-002",
-    pdfUrl: "/writeups/Write-Up 0xL0CCEDC0DE'S REVENGE.pdf",
+    pdfUrl: null,
   },
   {
     slug: "tryhackme-tomcat-ghostcat",
@@ -74,7 +74,7 @@ const POSTS: {
     cvss: "9.1",
     classification: "CTF / WEB",
     trkId: "TIB-2025-003",
-    pdfUrl: "/writeups/TryHackMe Tomcat (Ghostcat).pdf",
+    pdfUrl: "/writeups/tryhackme-tomcat-ghostcat.pdf",
   },
   {
     slug: "mr-robot-ctf",
@@ -87,7 +87,7 @@ const POSTS: {
     cvss: "8.6",
     classification: "CTF / WEB",
     trkId: "TIB-2025-004",
-    pdfUrl: "/writeups/Mr Robot CTF Final.pdf",
+    pdfUrl: "/writeups/mr-robot-ctf-final.pdf",
   },
   {
     slug: "jack-of-all-trades",
@@ -100,7 +100,7 @@ const POSTS: {
     cvss: "7.8",
     classification: "CTF / MULTI",
     trkId: "TIB-2025-005",
-    pdfUrl: "/writeups/CTF Walkthrough_ Jack-of-All-Trades.pdf",
+    pdfUrl: "/writeups/jack-of-all-trades-ctf.pdf",
   },
   {
     slug: "chainbreaker-re",
@@ -113,7 +113,7 @@ const POSTS: {
     cvss: "6.4",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-006",
-    pdfUrl: "/writeups/Chainbreaker (RE) Write-Up.pdf",
+    pdfUrl: "/writeups/chainbreaker-re-writeup.pdf",
   },
   {
     slug: "crowdsecurity-auth",
@@ -126,7 +126,7 @@ const POSTS: {
     cvss: "6.1",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-007",
-    pdfUrl: "/writeups/CrowdSecurity Auth – Full Write-up.pdf",
+    pdfUrl: "/writeups/crowdsecurity-auth-full-writeup.pdf",
   },
   {
     slug: "ascii-crackme",
@@ -139,7 +139,7 @@ const POSTS: {
     cvss: "5.9",
     classification: "REVERSE ENG",
     trkId: "TIB-2025-008",
-    pdfUrl: "/writeups/Writeup — ascii.pdf",
+    pdfUrl: "/writeups/ascii-crackme-writeup.pdf",
   },
   {
     slug: "cybertalents-practice-bash",
@@ -152,7 +152,7 @@ const POSTS: {
     cvss: "4.7",
     classification: "CTF / MISC",
     trkId: "TIB-2025-009",
-    pdfUrl: "/writeups/CyberTalents _Practice Bash_ Challenge Write-Up.pdf",
+    pdfUrl: "/writeups/cybertalents-practice-bash-writeup.pdf",
   },
   {
     slug: "tryhackme-three-season-streak",
@@ -182,16 +182,45 @@ const POSTS: {
   },
 ];
 
-const SEV_STYLE: Record<Severity, { bg: string; text: string; ring: string; label: string }> = {
-  critical: { bg: "bg-red-500/10",      text: "text-red-400",      ring: "ring-red-500/40",      label: "CRITICAL" },
-  high:     { bg: "bg-amber-500/10",    text: "text-amber-400",    ring: "ring-amber-500/40",    label: "HIGH"     },
-  medium:   { bg: "bg-cyber-cyan/10",   text: "text-cyber-cyan",   ring: "ring-cyber-cyan/40",   label: "MEDIUM"   },
-  info:     { bg: "bg-cyber-violet/10", text: "text-cyber-violet", ring: "ring-cyber-violet/40", label: "INFO"     },
+const SEV_STYLE: Record<
+  Severity,
+  { bg: string; text: string; ring: string; label: string }
+> = {
+  critical: {
+    bg: "bg-red-500/10",
+    text: "text-red-400",
+    ring: "ring-red-500/40",
+    label: "CRITICAL",
+  },
+  high: {
+    bg: "bg-amber-500/10",
+    text: "text-amber-400",
+    ring: "ring-amber-500/40",
+    label: "HIGH",
+  },
+  medium: {
+    bg: "bg-cyber-cyan/10",
+    text: "text-cyber-cyan",
+    ring: "ring-cyber-cyan/40",
+    label: "MEDIUM",
+  },
+  info: {
+    bg: "bg-cyber-violet/10",
+    text: "text-cyber-violet",
+    ring: "ring-cyber-violet/40",
+    label: "INFO",
+  },
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number }) {
+function BriefingCard({
+  post,
+  idx,
+}: {
+  post: (typeof POSTS)[number];
+  idx: number;
+}) {
   const sev = SEV_STYLE[post.severity];
 
   return (
@@ -200,10 +229,14 @@ function BriefingCard({ post, idx }: { post: (typeof POSTS)[number]; idx: number
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10%" }}
       transition={{ duration: 0.5, ease: EASE, delay: (idx % 4) * 0.05 }}
-      whileHover={{ y: -4, boxShadow: "0 20px 40px oklch(0 0 0 / 0.4), 0 0 30px oklch(0.85 0.18 200 / 0.25)" }}
+      whileHover={{
+        y: -4,
+        boxShadow:
+          "0 20px 40px oklch(0 0 0 / 0.4), 0 0 30px oklch(0.85 0.18 200 / 0.25)",
+      }}
     >
-      
-        href={post.pdfUrl ? encodeURI(post.pdfUrl) : undefined}
+      <a
+        href={post.pdfUrl ? post.pdfUrl : undefined}
         target="_blank"
         rel="noopener noreferrer"
         className={`group relative block overflow-hidden rounded-xl glass-panel gradient-border ${
@@ -291,11 +324,13 @@ function WriteupsPage() {
             threat::intel
           </div>
           <h1 className="mt-4 font-display text-4xl font-bold leading-tight sm:text-5xl">
-            Threat intelligence <span className="text-gradient-cyber">briefings</span>
+            Threat intelligence{" "}
+            <span className="text-gradient-cyber">briefings</span>
           </h1>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
-            Each writeup filed as an intel briefing — severity, CVSS estimate, classification, and a tracking ID.
-            Click any card for the full report.
+            Each writeup filed as an intel briefing — severity, CVSS estimate,
+            classification, and a tracking ID. Click any card for the full
+            report.
           </p>
         </div>
       </Reveal>
