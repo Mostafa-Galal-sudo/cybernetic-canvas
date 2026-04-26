@@ -1,23 +1,7 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Tag, FileWarning, ChevronRight } from "lucide-react";
-
-/**
- * تم تعديل الملف ليكون Standalone لتجنب مشاكل الـ Routes والاستيرادات الخارجية
- * مع الحفاظ على كامل محتوى الـ Writeups والبيانات الأصلية
- */
-
-// مكون Reveal مدمج لضمان العمل بدون ملفات خارجية
-const Reveal = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true }}
-    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay }}
-  >
-    {children}
-  </motion.div>
-);
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { Reveal } from "@/components/Reveal";
+import { ArrowLeft, Calendar, Tag } from "lucide-react";
 
 type Post = {
   slug: string;
@@ -27,16 +11,15 @@ type Post = {
   body: string;
 };
 
-// خريطة ملفات الـ PDF مع التأكد من المسارات الصحيحة
 const PDF_MAP: Record<string, string> = {
-  "0xl0ccedc0de-revenge": "/writeups/Write-Up 0xL0CCEDC0DE'S REVENGE.pdf",
-  "tryhackme-tomcat-ghostcat": "/writeups/TryHackMe Tomcat (Ghostcat).pdf",
-  "mr-robot-ctf": "/writeups/Mr Robot CTF Final.pdf",
-  "jack-of-all-trades": "/writeups/CTF Walkthrough_ Jack-of-All-Trades.pdf",
-  "chainbreaker-re": "/writeups/Chainbreaker (RE) Write-Up.pdf",
-  "crowdsecurity-auth": "/writeups/CrowdSecurity Auth – Full Write-up.pdf",
-  "ascii-crackme": "/writeups/Writeup — ascii.pdf",
-  "cybertalents-practice-bash": "/writeups/CyberTalents _Practice Bash_ Challenge Write-Up.pdf",
+  "0xl0ccedc0de-revenge":       "/writeups/Write-Up 0xL0CCEDC0DE'S REVENGE.pdf",
+  "tryhackme-tomcat-ghostcat":  "/writeups/tryhackme-tomcat-ghostcat.pdf",
+  "mr-robot-ctf":               "/writeups/mr-robot-ctf-final.pdf",
+  "jack-of-all-trades":         "/writeups/jack-of-all-trades-ctf.pdf",
+  "chainbreaker-re":            "/writeups/chainbreaker-re-writeup.pdf",
+  "crowdsecurity-auth":         "/writeups/crowdsecurity-auth-full-writeup.pdf",
+  "ascii-crackme":              "/writeups/ascii-crackme-writeup.pdf",
+  "cybertalents-practice-bash": "/writeups/cybertalents-practice-bash-writeup.pdf",
 };
 
 const POSTS: Record<string, Post> = {
@@ -474,140 +457,125 @@ The last archive contained a text file with the flag after base64 decoding the f
   },
 };
 
-export default function App() {
-  // محاكاة الحصول على الـ Slug من المسار (بما أننا في وضع Standalone بدون Router حالياً)
-  const [slug, setSlug] = React.useState<string | null>(null);
-  
-  useEffect(() => {
-    // محاكاة بسيطة لقراءة الـ slug من الـ URL أو افتراض أول واحد للعرض
-    const path = window.location.pathname.split("/").pop();
-    setSlug(path && POSTS[path] ? path : Object.keys(POSTS)[0]);
-  }, []);
+export const Route = createFileRoute("/writeups/$slug")({
+  loader: ({ params }) => {
+    if (PDF_MAP[params.slug]) {
+      return { post: null, pdfUrl: encodeURI(PDF_MAP[params.slug]) };
+    }
+    const post = POSTS[params.slug];
+    if (!post) throw notFound();
+    return { post, pdfUrl: null };
+  },
+  head: ({ loaderData }) => ({
+    meta: loaderData?.post
+      ? [
+          { title: `${loaderData.post.title} — Writeups — Mostafa Galal` },
+          { name: "description", content: loaderData.post.body.slice(0, 160) },
+          { property: "og:title", content: `${loaderData.post.title} — Mostafa Galal` },
+          { property: "og:description", content: loaderData.post.body.slice(0, 160) },
+        ]
+      : [{ title: "Writeup — Mostafa Galal" }],
+  }),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-3xl px-4 py-32 text-center sm:px-6">
+      <div className="font-mono text-xs uppercase tracking-[0.25em] text-cyber-cyan">
+        err::404
+      </div>
+      <h1 className="mt-4 font-display text-4xl font-bold">Writeup not found</h1>
+      <Link
+        to="/writeups"
+        className="mt-6 inline-flex items-center gap-2 rounded-full px-4 py-2 font-mono text-xs uppercase tracking-wider text-cyber-cyan glass-panel gradient-border"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> back to writeups
+      </Link>
+    </div>
+  ),
+  component: WriteupDetail,
+});
 
-  if (!slug) return null;
+function WriteupDetail() {
+  const { post, pdfUrl } = Route.useLoaderData();
 
-  const pdfUrl = PDF_MAP[slug];
-  const post = POSTS[slug];
-
-  // إذا كان هناك ملف PDF، نقوم بإعادة التوجيه إليه
   useEffect(() => {
     if (pdfUrl) {
-      setTimeout(() => {
-        window.location.href = pdfUrl;
-      }, 1500);
+      window.location.href = pdfUrl;
     }
   }, [pdfUrl]);
 
   if (pdfUrl) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#050505] font-mono text-xs uppercase tracking-[0.3em] text-cyan-400">
-        <motion.div
-          animate={{ opacity: [0.4, 1, 0.4] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        >
-          opening secure briefing: {slug}...
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (!post) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-[#050505] text-white">
-        <h1 className="text-2xl font-bold text-red-500">404 - Writeup Not Found</h1>
-        <button onClick={() => window.history.back()} className="mt-4 text-cyan-400 underline">Go Back</button>
+      <div className="flex h-screen items-center justify-center font-mono text-xs uppercase tracking-widest text-cyber-cyan">
+        opening briefing...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-cyan-500/30">
-      <article className="mx-auto max-w-3xl px-6 py-20 sm:px-12">
-        <Reveal>
-          <button
-            onClick={() => window.history.back()}
-            className="group inline-flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-cyan-400 transition-colors hover:text-cyan-300"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" /> 
-            back_to_database
-          </button>
-        </Reveal>
+    <article className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+      <Reveal>
+        <Link
+          to="/writeups"
+          className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-cyber-cyan"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> back to writeups
+        </Link>
+      </Reveal>
 
-        <Reveal delay={0.1}>
-          <div className="mt-12 flex flex-wrap items-center gap-4 font-mono text-[10px] uppercase tracking-widest text-white/40">
-            <span className="inline-flex items-center gap-1.5 border-r border-white/10 pr-4">
-              <Calendar className="h-3 w-3 text-cyan-500" /> {post.date}
-            </span>
-            <div className="flex gap-2">
-              {post.tags.map(tag => (
-                <span key={tag} className="inline-flex items-center gap-1 text-cyan-400/80">
-                  <Tag className="h-3 w-3" /> {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-          <h1 className="mt-6 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-            {post.title}
-          </h1>
-          <div className="mt-8 h-1 w-20 bg-gradient-to-r from-cyan-500 to-transparent" />
-        </Reveal>
+      <Reveal delay={0.1}>
+        <div className="mt-8 flex flex-wrap items-center gap-4 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="inline-flex items-center gap-1">
+            <Calendar className="h-3 w-3" /> {post!.date}
+          </span>
+          <span className="inline-flex items-center gap-1 text-cyber-cyan">
+            <Tag className="h-3 w-3" /> {post!.tags.join(" / ")}
+          </span>
+        </div>
+        <h1 className="mt-3 font-display text-4xl font-bold leading-tight sm:text-5xl">
+          {post!.title}
+        </h1>
+      </Reveal>
 
-        <Reveal delay={0.2}>
-          <div className="mt-12 space-y-8 text-lg leading-relaxed text-white/70">
-            {post.body.split("\n\n").map((block: string, i: number) => {
-              // العناوين الفرعية
-              if (block.startsWith("## ")) {
-                return (
-                  <h2
-                    key={i}
-                    className="mt-12 text-2xl font-bold text-white border-l-4 border-cyan-500 pl-4"
-                  >
-                    {block.replace(/^##\s/, "")}
-                  </h2>
-                );
-              }
-              // كود برمجى
-              if (block.startsWith("```")) {
-                const code = block.replace(/^```[a-z]*\n?/, "").replace(/```$/, "");
-                return (
-                  <div key={i} className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                    <pre className="relative overflow-x-auto rounded-xl border border-white/10 bg-black/50 p-6 font-mono text-sm leading-relaxed text-cyan-50/90 backdrop-blur-sm">
-                      <code>{code}</code>
-                    </pre>
-                  </div>
-                );
-              }
-              // القوائم
-              if (block.startsWith("- ")) {
-                return (
-                  <ul key={i} className="space-y-3 ml-2">
-                    {block.split("\n").map((li: string, j: number) => (
-                      <li key={j} className="flex gap-3 items-start">
-                        <ChevronRight className="h-5 w-5 text-cyan-500 shrink-0 mt-0.5" />
-                        <span>{li.replace(/^-\s/, "")}</span>
-                      </li>
-                    ))}
-                  </ul>
-                );
-              }
-              // الفقرات العادية
+      <Reveal delay={0.15}>
+        <div className="prose prose-invert mt-10 max-w-none space-y-5 text-foreground/85">
+          {post!.body.split("\n\n").map((block: string, i: number) => {
+            if (block.startsWith("## ")) {
               return (
-                <p key={i} className="text-white/70">
-                  {block}
-                </p>
+                <h2
+                  key={i}
+                  className="mt-8 font-display text-2xl font-semibold text-foreground"
+                >
+                  {block.replace(/^##\s/, "")}
+                </h2>
               );
-            })}
-          </div>
-        </Reveal>
-        
-        <Reveal delay={0.4}>
-          <div className="mt-20 border-t border-white/5 pt-10 flex flex-col sm:flex-row justify-between items-center gap-6 font-mono text-[10px] uppercase tracking-[0.2em] text-white/30">
-            <span>intel_id: {slug.toUpperCase()}</span>
-            <span>clearance_level: top_secret</span>
-          </div>
-        </Reveal>
-      </article>
-    </div>
+            }
+            if (block.startsWith("```")) {
+              const code = block.replace(/^```[a-z]*\n?/, "").replace(/```$/, "");
+              return (
+                <pre
+                  key={i}
+                  className="overflow-x-auto rounded-xl p-4 font-mono text-xs glass-panel gradient-border"
+                >
+                  <code>{code}</code>
+                </pre>
+              );
+            }
+            if (block.startsWith("- ")) {
+              return (
+                <ul key={i} className="ml-5 list-disc space-y-1.5">
+                  {block.split("\n").map((li: string, j: number) => (
+                    <li key={j}>{li.replace(/^-\s/, "")}</li>
+                  ))}
+                </ul>
+              );
+            }
+            return (
+              <p key={i} className="leading-relaxed">
+                {block}
+              </p>
+            );
+          })}
+        </div>
+      </Reveal>
+    </article>
   );
 }
