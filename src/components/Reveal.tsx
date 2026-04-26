@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ export function Reveal({
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const ctx = gsap.context(() => {
@@ -41,7 +41,8 @@ export function Reveal({
           scrollTrigger: {
             trigger: el,
             start: "top 85%",
-            toggleActions: "play none none reverse",
+            toggleActions: "play none none none",
+            once: true,
           },
         },
       );
