@@ -1655,6 +1655,316 @@ is the sweet spot for most narrowband audio/RF stages.
       },
     ],
   },
+  {
+    id: "smartcar",
+    name: "SmartCar OS",
+    domain: "embedded",
+    status: "active",
+    tags: ["embedded", "arduino", "bluetooth", "android", "websocket", "computer-vision", "voice-ai", "biometric", "cyberpunk-ui"],
+    description: "Full-stack smart RC car ecosystem — Android app with 9 control modes (voice AI, gyro, camera, clap, music rhythm, draw path), Arduino firmware with servo sweep & obstacle avoidance, and a real-time cyberpunk web dashboard.",
+    github: "https://github.com/Mostafa-Galal-sudo/SmartCarApp",
+    demo: "",
+    image: "/assets/smartcar.png",
+    runCommand: "$ ./gradlew assembleDebug && avrdude -p atmega328p -U flash:w:smartcar.hex",
+    runOutput: [
+      "[*] SmartCar OS v1.0 — Build started",
+      "[*] Gradle: OK  (app-debug.apk: 4.2 MB)",
+      "[*] Arduino: OK  (program: 9,116 bytes)",
+      "[*] Uploading firmware via /dev/ttyUSB0 @ 9600",
+      "[+] Flash verified ✓",
+      "[*] HC-05 paired · WebSocket server: ws://192.168.1.42:8080",
+      "[*] Biometric auth: PASSED",
+      "[*] Dashboard connected · telemetry streaming",
+      "[+] System ready · 9 modes available",
+    ],
+    files: [
+      {
+        name: "README.md",
+        lang: "md",
+        content: `# SmartCar OS
+
+**A full-stack smart RC car ecosystem — Android · Arduino · Web Dashboard**
+
+_Nine control modes. One phone. Zero compromises._
+
+## System Architecture
+
+Web Dashboard (Browser) ← WebSocket → Android App (Bridge) ← Bluetooth → Arduino (Car)
+
+## Control Modes
+
+| # | Mode | How |
+|---|------|-----|
+| 1 | Manual | D-pad / keyboard |
+| 2 | Autonomous | Ultrasonic + servo sweep + avoidance |
+| 3 | Body Follower | Follows nearest object at 7–20 cm |
+| 4 | Gyroscope | Tilt phone → accelerometer → WASD |
+| 5 | Voice AI | NLP in English & Arabic |
+| 6 | Line Follower | CameraX grayscale centroid tracking |
+| 7 | Clap Control | 1 clap=Stop · 2=Forward · 3=Back |
+| 8 | Music Rhythm | Spectral flux → car dances to beat |
+| 9 | Draw Path | Draw route → car executes it |
+
+## Security
+
+- Biometric auth (fingerprint/face) before BT connect
+- WebSocket bridge on local network only
+
+## Tech Stack
+
+- Android: Java · CameraX · BiometricPrompt · java-websocket
+- Arduino: C++ · Servo.h · L298N · HC-SR04
+- Dashboard: Vanilla JS · Web Audio API · Canvas 2D · WebSocket
+`,
+      },
+      {
+        name: "smartcar.ino",
+        lang: "ino",
+        content: `// SmartCar OS — Arduino firmware
+// Pinout: Servo(3), Echo(4), Trig(12), ENL(5), IN3(6), IN4(7), IN1(8), IN2(9), ENR(11)
+// Button(2) for offline mode cycling
+
+#include <Servo.h>
+
+Servo servo;
+const int BTN = 2, SERVO = 3, ECHO = 4, TRIG = 12;
+const int ENL = 5, IN3 = 6, IN4 = 7, IN1 = 8, IN2 = 9, ENR = 11;
+
+enum Mode { IDLE, AUTO_MANUAL, BODY_FOLLOWER, GYRO };
+Mode mode = IDLE;
+
+void setup() {
+  pinMode(BTN, INPUT_PULLUP);
+  pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
+  pinMode(ENL, OUTPUT); pinMode(ENR, OUTPUT);
+  pinMode(TRIG, OUTPUT); pinMode(ECHO, INPUT);
+  servo.attach(SERVO);
+  Serial.begin(9600);
+}
+
+long dist(int angle) {
+  servo.write(angle);
+  delay(200);
+  digitalWrite(TRIG, LOW); delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH); delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  return pulseIn(ECHO, HIGH) * 0.034 / 2;
+}
+
+void drive(int l, int r) {
+  digitalWrite(IN1, l > 0); digitalWrite(IN2, l < 0);
+  digitalWrite(IN3, r > 0); digitalWrite(IN4, r < 0);
+  analogWrite(ENL, abs(l)); analogWrite(ENR, abs(r));
+}
+
+void loop() {
+  if (Serial.available()) {
+    char c = Serial.read();
+    switch (c) {
+      case 'F': drive(150, 150); break;
+      case 'B': drive(-150, -150); break;
+      case 'L': drive(-130, 130); break;
+      case 'R': drive(130, -130); break;
+      case 'S': drive(0, 0); break;
+      case 'A': mode = AUTO_MANUAL; break;
+      case 'M': mode = IDLE; break;
+      case 'P': mode = BODY_FOLLOWER; break;
+    }
+  }
+
+  if (mode == AUTO_MANUAL) {
+    long f = dist(90), l = dist(150), r = dist(30);
+    if (f > 40) drive(150, 150);
+    else if (f > 20) drive(80, 80);
+    else {
+      drive(0, 0);
+      if (l > r) drive(-130, 130);
+      else drive(130, -130);
+      delay(650);
+    }
+  }
+
+  if (mode == BODY_FOLLOWER) {
+    long f = dist(90), l = dist(150), r = dist(30);
+    if (f > 20 && f < 40) drive(80, 80);
+    else if (f < 7) drive(-80, -80);
+    else if (l < r) drive(130, -130);
+    else drive(-130, 130);
+  }
+
+  Serial.print("L:"); Serial.print(dist(150));
+  Serial.print(",F:"); Serial.print(dist(90));
+  Serial.print(",R:"); Serial.print(dist(30));
+  Serial.print(",MOD:"); Serial.println(mode == IDLE ? "IDLE" : (mode == AUTO_MANUAL ? "AUTO" : "FOLLOW"));
+  delay(100);
+}
+`,
+      },
+      {
+        name: "MainActivity.java",
+        lang: "txt",
+        content: `package com.example.smartcar;
+
+// SmartCar OS — Android Bridge App
+// Single Activity · Pure Java · API 24+
+// Features: Biometric Auth, WebSocket Server, 9 Control Modes
+
+import android.os.Bundle;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
+import java.util.UUID;
+import org.java_websocket.server.WebSocketServer;
+import org.java_websocket.WebSocket;
+
+public class MainActivity extends AppCompatActivity {
+    private static final UUID BT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+    private BluetoothSocket btSocket;
+    private WebSocketServer wsServer;
+    private BiometricPrompt biometricPrompt;
+
+    // 9 Control Modes: MANUAL, AUTONOMOUS, BODY_FOLLOWER, GYROSCOPE,
+    // VOICE_AI, LINE_FOLLOWER, CLAP_CONTROL, MUSIC_RHYTHM, DRAW_PATH
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        biometricPrompt = new BiometricPrompt(this,
+            ContextCompat.getMainExecutor(this),
+            new BiometricPrompt.AuthenticationCallback() {
+                @Override
+                public void onAuthenticationSucceeded(AuthenticationResult result) {
+                    connectBluetooth();
+                }
+            });
+
+        wsServer = new SmartCarWSServer(8080);
+        wsServer.start();
+    }
+
+    private void connectBluetooth() {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        BluetoothDevice device = adapter.getBondedDevices().iterator().next();
+        btSocket = device.createRfcommSocketToServiceRecord(BT_UUID);
+        btSocket.connect();
+    }
+
+    class SmartCarWSServer extends WebSocketServer {
+        public SmartCarWSServer(int port) { super(new InetSocketAddress(port)); }
+        @Override
+        public void onOpen(WebSocket conn, ClientHandshake handshake) {
+            conn.send("{\"t\":\"connected\",\"modes\":9}");
+        }
+        @Override
+        public void onMessage(WebSocket conn, String message) {
+            if (btSocket != null && btSocket.isConnected()) {
+                btSocket.getOutputStream().write(message.getBytes());
+            }
+        }
+    }
+}
+`,
+      },
+      {
+        name: "webdashboard/app.js",
+        lang: "js",
+        content: `// SmartCar OS — Cyberpunk Web Dashboard
+// Pure Vanilla JS · WebSocket · Canvas 2D · Web Audio API
+
+const WS_URL = 'ws://PHONE_IP:8080';
+let ws = null;
+let telemetry = { dist: { f: 999, l: 999, r: 999 }, mode: 'IDLE' };
+
+class TelemetryApp {
+  constructor() {
+    this.connect(); this.setupKeyboard(); this.setupGyro(); this.setupAudio();
+  }
+  connect() {
+    ws = new WebSocket(WS_URL);
+    ws.onmessage = (e) => {
+      telemetry = JSON.parse(e.data);
+      this.updateGauges(); this.updateRadar();
+    };
+  }
+  updateGauges() {
+    const d = telemetry.dist.f;
+    const color = d >= 40 ? '#00f0ff' : (d < 20 ? '#ff3366' : '#ffcc00');
+    document.getElementById('dist-gauge').style.stroke = color;
+    document.getElementById('dist-val').textContent = d === 999 ? '∞' : d + 'cm';
+  }
+  updateRadar() {
+    const c = document.getElementById('radar').getContext('2d');
+    c.clearRect(0, 0, 200, 200);
+    c.beginPath(); c.arc(100, 100, 80, Math.PI * 0.7, Math.PI * 1.3);
+    c.strokeStyle = '#00f0ff'; c.stroke();
+    if (telemetry.dist.l < 50) this.drawBlip(c, 150, telemetry.dist.l);
+    if (telemetry.dist.r < 50) this.drawBlip(c, 30, telemetry.dist.r);
+  }
+  drawBlip(c, angle, dist) {
+    const rad = (angle * Math.PI) / 180;
+    const r = (dist / 200) * 80;
+    c.fillStyle = '#b026ff';
+    c.beginPath();
+    c.arc(100 + r * Math.cos(rad), 100 - r * Math.sin(rad), 4, 0, Math.PI * 2);
+    c.fill();
+  }
+  setupKeyboard() {
+    const keys = { 'w': 'F', 's': 'B', 'a': 'L', 'd': 'R', ' ': 'S' };
+    document.addEventListener('keydown', (e) => { if (keys[e.key]) ws.send(keys[e.key]); });
+  }
+  setupGyro() {
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.beta > 15) ws.send('F');
+      else if (e.beta < -15) ws.send('B');
+      else ws.send('S');
+    });
+  }
+  setupAudio() {
+    const ctx = new AudioContext();
+    const analyser = ctx.createAnalyser();
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        ctx.createMediaStreamSource(stream).connect(analyser);
+        this.detectBeat(analyser);
+      });
+  }
+  detectBeat(analyser) {
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    setInterval(() => {
+      analyser.getByteFrequencyData(data);
+      if (data.reduce((a, b) => a + b, 0) > 1500) ws.send('F');
+    }, 100);
+  }
+}
+new TelemetryApp();
+`,
+      },
+      {
+        name: "webdashboard/index.html",
+        lang: "txt",
+        content: `<!DOCTYPE html>
+<html>
+<head><title>SmartCar OS — Mission Control</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <div class="dashboard">
+    <header><h1>SMARTCAR OS</h1><div class="status connected">● CONNECTED</div></header>
+    <main>
+      <div class="panel"><h2>Telemetry</h2><svg id="dist-gauge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" stroke="#00f0ff" stroke-width="4" fill="none"/></svg><div id="dist-val">∞ cm</div></div>
+      <div class="panel"><h2>Radar</h2><canvas id="radar" width="200" height="200"></canvas></div>
+      <div class="panel"><h2>Controls</h2><div class="dpad"><button onclick="ws.send('F')">▲</button><button onclick="ws.send('L')">◀</button><button onclick="ws.send('S')">■</button><button onclick="ws.send('R')">▶</button><button onclick="ws.send('B')">▼</button></div></div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>`,
+      },
+    ],
+  },
 ];
 
 const DOMAIN_ICON = {
