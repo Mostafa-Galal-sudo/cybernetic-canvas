@@ -1663,7 +1663,7 @@ is the sweet spot for most narrowband audio/RF stages.
     tags: ["embedded", "arduino", "bluetooth", "android", "websocket", "computer-vision", "voice-ai", "biometric", "cyberpunk-ui"],
     description: "Full-stack smart RC car ecosystem — Android app with 9 control modes (voice AI, gyro, camera, clap, music rhythm, draw path), Arduino firmware with servo sweep & obstacle avoidance, and a real-time cyberpunk web dashboard.",
     github: "https://github.com/Mostafa-Galal-sudo/SmartCarApp",
-    demo: "",
+    demo: "/assets/smartcar_demo.mp4",
     image: "/assets/smartcar.png",
     runCommand: "$ ./gradlew assembleDebug && avrdude -p atmega328p -U flash:w:smartcar.hex",
     runOutput: [
