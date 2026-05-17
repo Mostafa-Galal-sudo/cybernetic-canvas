@@ -119,6 +119,22 @@ const CAPABILITIES: Capability[] = [
     tools: ["HC-05", "AT cmds"],
     useCases: ["Wireless control", "Embedded comms", "Sensor relay"],
     notes: "Wireless control for embedded vehicle." },
+  { id: "android", name: "Android Development", category: "Languages", CategoryIcon: Code2, depth: 82, experience: "SmartCar OS", frequency: "monthly",
+    tools: ["Java", "CameraX", "BiometricPrompt", "java-websocket", "Gradle"],
+    useCases: ["Mobile app development", "Camera-based computer vision", "Biometric authentication", "WebSocket server implementation"],
+    notes: "Built SmartCar OS Android bridge app with 9 control modes, biometric auth, and real-time WebSocket server." },
+  { id: "websocket", name: "WebSocket / Real-Time Comms", category: "Networking", CategoryIcon: ShieldCheck, depth: 78, experience: "SmartCar OS", frequency: "monthly",
+    tools: ["java-websocket", "WebSocket API", "JSON"],
+    useCases: ["Real-time telemetry streaming", "Browser-to-device bridging", "Live dashboard updates"],
+    notes: "Implemented WebSocket bridge in SmartCar OS for real-time car telemetry and remote control." },
+  { id: "signal", name: "Signal Processing / Audio Analysis", category: "Embedded", CategoryIcon: Cpu, depth: 75, experience: "SmartCar OS", frequency: "monthly",
+    tools: ["AudioRecord", "Web Audio API", "FFT", "RMS"],
+    useCases: ["Clap detection", "Music beat detection", "Spectral flux analysis", "Voice command recognition"],
+    notes: "Built clap control, music rhythm mode, and voice AI with spectral flux and RMS state machines." },
+  { id: "hardware", name: "Hardware Interfacing / Embedded Control", category: "Embedded", CategoryIcon: Cpu, depth: 85, experience: "SmartCar + Vehicle", frequency: "monthly",
+    tools: ["Arduino", "HC-05/06", "L298N", "PWM", "Servo", "HC-SR04"],
+    useCases: ["Motor control", "Ultrasonic sensing", "Servo sweep", "Bluetooth serial", "PWM ramping"],
+    notes: "SmartCar OS: servo sweep, obstacle avoidance, motor ramping, and multi-mode state machine." },
 ];
 
 const CATEGORIES = Array.from(new Set(CAPABILITIES.map((c) => c.category)));
